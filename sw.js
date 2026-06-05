@@ -1,5 +1,6 @@
-var CACHE = 'tesi-v1';
-var SHELL = ['/', '/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png'];
+var CACHE = 'tesi-v2';
+var BASE = '/Tesi-Trainer-apk';
+var SHELL = [BASE+'/', BASE+'/manifest.json', BASE+'/icons/icon-192.png', BASE+'/icons/icon-512.png'];
 
 self.addEventListener('install', function(e){
   e.waitUntil(
