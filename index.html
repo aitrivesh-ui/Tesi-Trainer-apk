@@ -338,10 +338,12 @@ html,body{width:100%;overflow-x:hidden;background:#0a0a0f;font-family:'Inter',sa
     <div class="logo">TESI <span>TRAINER</span></div>
     <div style="display:flex;align-items:center;gap:8px">
       <button class="sync-icon-btn" onclick="openSync()" title="Sync / Backup">&#9729;</button>
-      <div id="profileTop" style="font-size:11px;color:var(--t3);text-align:right;line-height:1.6;cursor:pointer" onclick="openUserPicker()">--</div>
+      <div onclick="openUserPicker()" style="cursor:pointer;text-align:right">
+        <div id="profileTop" style="font-size:11px;color:var(--t3);line-height:1.6">--</div>
+        <div id="profileSub" style="display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap;justify-content:flex-end"></div>
+      </div>
     </div>
   </div>
-  <div id="profileSub" style="display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap"></div>
   <div class="week-row">
     <button class="wn-btn" onclick="changeWeek(-1)">&#8249;</button>
     <span class="wn-lbl" id="weekLabel">Week 1</span>
@@ -1646,11 +1648,11 @@ function renderHeader(){
   var pt=document.getElementById('profileTop');
   var ps=document.getElementById('profileSub');
   if(!u||!pt||!ps)return;
-  pt.innerHTML=(u.weight||'--')+' kg &middot; '+(u.height||'--')+' cm<br>'+(u.location||'--')+'<br><span style="color:var(--accent);font-size:10px">&#8644; switch</span>';
+  pt.innerHTML='<span style="font-weight:600;color:var(--t1)">'+(u.name||'User')+'</span> <span style="color:var(--accent);font-size:10px">&#9660;</span><br>'+(u.weight||'--')+' kg &middot; '+(u.location||'--')+'</br>';
   ps.innerHTML=''
-    +'<div class="sub" style="margin:0">Bench ~'+(u.bench1rm||'--')+' kg &middot; 6-day split &middot; 6 AM</div>'
-    +'<span class="bw-chip" onclick="openBW()">&#9878; <span id="bwToday">--</span> kg<span class="bw-spark" id="bwSpark"></span></span>'
-    +'<button onclick="openPR()" style="font-size:11px;color:var(--pmp);background:var(--pdim);border:1px solid rgba(255,179,71,.3);border-radius:20px;padding:3px 10px;cursor:pointer">&#127942; PRs</button>';
+    +'<div class="sub" style="margin:0">Bench ~'+(u.bench1rm||'--')+' kg &middot; 6-day split</div>'
+    +'<span class="bw-chip" onclick="event.stopPropagation();openBW()">&#9878; <span id="bwToday">--</span> kg<span class="bw-spark" id="bwSpark"></span></span>'
+    +'<button onclick="event.stopPropagation();openPR()" style="font-size:11px;color:var(--pmp);background:var(--pdim);border:1px solid rgba(255,179,71,.3);border-radius:20px;padding:3px 10px;cursor:pointer">&#127942; PRs</button>';
   updateBWChip();
 }
 
