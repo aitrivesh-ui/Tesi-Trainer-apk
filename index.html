@@ -1946,15 +1946,12 @@ function connectFirebase(){
       fbDb=window.firebase.firestore(fbApp);
       fbAuth=window.firebase.auth(fbApp);
       saveFbConfig(cfg);
-      setSyncStatus('cloudStatus','Signing in with Google...','ok');
+      setSyncStatus('cloudStatus','Redirecting to Google sign-in...','ok');
       var provider=new window.firebase.auth.GoogleAuthProvider();
-      fbAuth.signInWithPopup(provider).then(function(result){
-        fbUser=result.user;
-        setSyncStatus('cloudStatus','Signed in as '+fbUser.email,'ok');
-        document.getElementById('fbSignedInPane').style.display='';
-        document.getElementById('fbConnectBtn').style.display='none';
-        document.getElementById('fbUserLbl').textContent='Signed in as '+fbUser.email;
-      }).catch(function(err){setSyncStatus('cloudStatus','Sign-in error: '+err.message,'err');});
+      // Use redirect (works in PWA standalone mode; popup is often blocked)
+      fbAuth.signInWithRedirect(provider).catch(function(err){
+        setSyncStatus('cloudStatus','Sign-in error: '+err.message,'err');
+      });
     }catch(ex){setSyncStatus('cloudStatus','Firebase error: '+ex.message,'err');}
   });
 }
@@ -2045,32 +2042,49 @@ function showSyncDot(state){
       fbApp=window.firebase.initializeApp(cfg,'tesi-sync');
       fbDb=window.firebase.firestore(fbApp);
       fbAuth=window.firebase.auth(fbApp);
-      fbAuth.onAuthStateChanged(function(u){
-        if(u){
-          fbUser=u;
-          // Auto-pull on sign-in: only if cloud is newer
-          var ref=fbDb.collection('tesi').doc(u.uid);
-          ref.get().then(function(snap){
-            if(!snap.exists)return;
-            var cloudTs=snap.data().ts||0;
-            var localTs=parseInt(localStorage.getItem('tt_lastsync')||'0');
-            if(cloudTs>localTs){
-              var n=snap.data().chunks||1;
-              var promises=[];
-              for(var i=0;i<n;i++)promises.push(ref.collection('data').doc('chunk'+i).get());
-              Promise.all(promises).then(function(snaps){
-                var merged={};
-                snaps.forEach(function(s){if(s.exists)Object.assign(merged,s.data());});
-                delete merged._ts;
-                restoreAllTesiData(merged);
-                localStorage.setItem('tt_lastsync',cloudTs);
-                showSyncDot('ok');
-                location.reload();
-              });
-            }
-          }).catch(function(){});
-        }
+
+      function onFbUser(u){
+        fbUser=u;
+        // Update UI if sync modal is open
+        var lbl=document.getElementById('fbUserLbl');
+        var pane=document.getElementById('fbSignedInPane');
+        var btn=document.getElementById('fbConnectBtn');
+        if(lbl)lbl.textContent='Signed in as '+u.email;
+        if(pane)pane.style.display='';
+        if(btn)btn.style.display='none';
+        setSyncStatus('cloudStatus','Signed in as '+u.email,'ok');
+        // Auto-pull if cloud is newer
+        var ref=fbDb.collection('tesi').doc(u.uid);
+        ref.get().then(function(snap){
+          if(!snap.exists)return;
+          var cloudTs=snap.data().ts||0;
+          var localTs=parseInt(localStorage.getItem('tt_lastsync')||'0');
+          if(cloudTs>localTs){
+            var n=snap.data().chunks||1;
+            var promises=[];
+            for(var i=0;i<n;i++)promises.push(ref.collection('data').doc('chunk'+i).get());
+            Promise.all(promises).then(function(snaps){
+              var merged={};
+              snaps.forEach(function(s){if(s.exists)Object.assign(merged,s.data());});
+              delete merged._ts;
+              restoreAllTesiData(merged);
+              localStorage.setItem('tt_lastsync',cloudTs);
+              showSyncDot('ok');
+              location.reload();
+            });
+          }
+        }).catch(function(){});
+      }
+
+      // Handle redirect result (after returning from Google sign-in)
+      fbAuth.getRedirectResult().then(function(result){
+        if(result&&result.user)onFbUser(result.user);
+      }).catch(function(err){
+        setSyncStatus('cloudStatus','Sign-in error: '+err.message,'err');
       });
+
+      // Also listen for existing session
+      fbAuth.onAuthStateChanged(function(u){if(u)onFbUser(u);});
     }catch(e){}
   });
 })();
