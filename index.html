@@ -337,7 +337,7 @@ html,body{width:100%;overflow-x:hidden;background:#0a0a0f;font-family:'Inter',sa
   <div class="hdr-top">
     <div class="logo">TESI <span>TRAINER</span></div>
     <div style="display:flex;align-items:center;gap:8px">
-      <button class="sync-icon-btn" onclick="openSync()" title="Sync / Backup">&#9729;</button>
+      <button class="sync-icon-btn" onclick="openSync()" title="Sync / Backup">&#9729;<span id="syncDot" style="display:none;width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;vertical-align:top;margin-top:2px;margin-left:2px"></span></button>
       <div onclick="openUserPicker()" style="cursor:pointer;text-align:right">
         <div id="profileTop" style="font-size:11px;color:var(--t3);line-height:1.6">--</div>
         <div id="profileSub" style="display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap;justify-content:flex-end"></div>
@@ -708,6 +708,7 @@ function loadState(){
   loadNotifPrefs();
 }
 
+var fbAutoTimer=null;
 function persist(){
   try{
     localStorage.setItem(uPfx('days'),JSON.stringify(DAYS));
@@ -720,6 +721,11 @@ function persist(){
     localStorage.setItem(uPfx('mealtype'),mealType);
   }catch(e){}
   showToast();
+  // Auto-push to Firebase after 10s idle (debounced)
+  if(fbDb&&fbUser){
+    clearTimeout(fbAutoTimer);
+    fbAutoTimer=setTimeout(function(){fbPushSilent();},10000);
+  }
 }
 
 var toastTimer;
@@ -1968,7 +1974,9 @@ function fbPush(){
   var promises=Object.keys(chunks).map(function(c){return ref.collection('data').doc(c).set(chunks[c]);});
   // Store chunk count
   promises.push(ref.set({chunks:Object.keys(chunks).length,ts:Date.now()},{merge:true}));
-  Promise.all(promises).then(function(){setSyncStatus('cloudStatus','Pushed! Data is live on all devices.','ok');}).catch(function(e){setSyncStatus('cloudStatus','Push error: '+e.message,'err');});
+  var now=Date.now();
+  promises.push(ref.set({chunks:Object.keys(chunks).length,ts:now},{merge:true}));
+  Promise.all(promises).then(function(){localStorage.setItem('tt_lastsync',now);setSyncStatus('cloudStatus','Pushed! Auto-sync is now active.','ok');}).catch(function(e){setSyncStatus('cloudStatus','Push error: '+e.message,'err');});
 }
 
 function fbPull(){
@@ -2001,6 +2009,30 @@ function fbSignOut(){
   setSyncStatus('cloudStatus','Signed out.','ok');
 }
 
+function fbPushSilent(){
+  if(!fbDb||!fbUser)return;
+  var payload=getAllTesiData();payload._ts=Date.now();
+  var chunks={};var cur={};var curSize=0;var ci=0;
+  Object.keys(payload).forEach(function(k){
+    var v=payload[k];var sz=(v||'').length;
+    if(curSize+sz>800000){chunks['chunk'+ci]=cur;ci++;cur={};curSize=0;}
+    cur[k]=v;curSize+=sz;
+  });
+  chunks['chunk'+ci]=cur;
+  var ref=fbDb.collection('tesi').doc(fbUser.uid);
+  var promises=Object.keys(chunks).map(function(c){return ref.collection('data').doc(c).set(chunks[c]);});
+  promises.push(ref.set({chunks:Object.keys(chunks).length,ts:Date.now()},{merge:true}));
+  Promise.all(promises).then(function(){showSyncDot('ok');}).catch(function(){showSyncDot('err');});
+}
+
+function showSyncDot(state){
+  var el=document.getElementById('syncDot');if(!el)return;
+  el.style.background=state==='ok'?'var(--accent)':'var(--red)';
+  el.style.display='inline-block';
+  clearTimeout(el._t);
+  el._t=setTimeout(function(){el.style.display='none';},3000);
+}
+
 // Auto-reconnect Firebase on load if config saved
 (function(){
   var cfg=loadFbConfig();
@@ -2011,7 +2043,32 @@ function fbSignOut(){
       fbApp=window.firebase.initializeApp(cfg,'tesi-sync');
       fbDb=window.firebase.firestore(fbApp);
       fbAuth=window.firebase.auth(fbApp);
-      fbAuth.onAuthStateChanged(function(u){if(u){fbUser=u;}});
+      fbAuth.onAuthStateChanged(function(u){
+        if(u){
+          fbUser=u;
+          // Auto-pull on sign-in: only if cloud is newer
+          var ref=fbDb.collection('tesi').doc(u.uid);
+          ref.get().then(function(snap){
+            if(!snap.exists)return;
+            var cloudTs=snap.data().ts||0;
+            var localTs=parseInt(localStorage.getItem('tt_lastsync')||'0');
+            if(cloudTs>localTs){
+              var n=snap.data().chunks||1;
+              var promises=[];
+              for(var i=0;i<n;i++)promises.push(ref.collection('data').doc('chunk'+i).get());
+              Promise.all(promises).then(function(snaps){
+                var merged={};
+                snaps.forEach(function(s){if(s.exists)Object.assign(merged,s.data());});
+                delete merged._ts;
+                restoreAllTesiData(merged);
+                localStorage.setItem('tt_lastsync',cloudTs);
+                showSyncDot('ok');
+                location.reload();
+              });
+            }
+          }).catch(function(){});
+        }
+      });
     }catch(e){}
   });
 })();
