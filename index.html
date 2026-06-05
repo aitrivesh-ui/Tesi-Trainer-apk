@@ -147,6 +147,22 @@ html,body{width:100%;overflow-x:hidden;background:#0a0a0f;font-family:'Inter',sa
 .fp{font-size:11px;color:var(--t3);white-space:nowrap}
 .fnote{font-size:11px;color:var(--t3);padding:4px 14px;border-bottom:1px solid var(--bdr);font-style:italic}
 .mchkrow{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--bdr)}
+/* ── Share modal ── */
+.share-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;display:flex;align-items:flex-end;justify-content:center;padding:0}
+.share-sheet{background:var(--bg2);border-radius:20px 20px 0 0;border:1px solid var(--bdr2);width:100%;max-width:600px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden}
+.share-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid var(--bdr);flex-shrink:0}
+.share-title{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--t1)}
+.share-close{width:32px;height:32px;border:1px solid var(--bdr2);border-radius:8px;background:var(--bg3);color:var(--t2);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center}
+.share-tabs{display:flex;gap:8px;padding:12px 18px 0;flex-shrink:0}
+.stab{flex:1;padding:10px;border:1px solid var(--bdr2);border-radius:8px;background:var(--bg3);color:var(--t2);cursor:pointer;font-size:13px;font-weight:500;font-family:'Inter',sans-serif;text-align:center}
+.stab.on{background:var(--adim);border-color:var(--accent);color:var(--accent)}
+.share-hint{font-size:11px;color:var(--t3);padding:8px 18px 4px;flex-shrink:0;line-height:1.5}
+.share-hint b{color:var(--t2)}
+.share-textarea{flex:1;margin:8px 14px;padding:12px;background:var(--bg4);border:1px solid var(--bdr2);border-radius:10px;color:var(--t2);font-size:11px;font-family:'Courier New',monospace;line-height:1.6;resize:none;outline:none;overflow-y:auto;min-height:0}
+.share-footer{display:flex;gap:10px;padding:12px 18px 20px;flex-shrink:0;border-top:1px solid var(--bdr)}
+.share-copy{flex:2;padding:13px;background:var(--accent);border:none;border-radius:10px;color:#000;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif}
+.share-native{flex:1;padding:13px;background:var(--bg3);border:1px solid var(--bdr2);border-radius:10px;color:var(--t2);font-size:13px;cursor:pointer;font-family:'Inter',sans-serif}
+.share-copied{background:var(--adim);border:1px solid var(--accent);color:var(--accent)}
 .mchk{min-width:32px;height:32px;border:1px solid var(--bdr2);border-radius:8px;background:var(--bg3);color:var(--t3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
 .mchk.on{background:var(--accent);border-color:var(--accent);color:#000}
 .mchklbl{font-size:13px;color:var(--t3)}
@@ -190,6 +206,26 @@ html,body{width:100%;overflow-x:hidden;background:#0a0a0f;font-family:'Inter',sa
 </div>
 
 <div class="save-toast" id="saveToast">Saved &#10003;</div>
+
+<!-- Share Modal -->
+<div class="share-overlay" id="shareOverlay" style="display:none" onclick="if(event.target===this)closeShare()">
+  <div class="share-sheet">
+    <div class="share-head">
+      <span class="share-title">&#128203; Share Progress</span>
+      <button class="share-close" onclick="closeShare()">&#10005;</button>
+    </div>
+    <div class="share-tabs">
+      <button class="stab on" id="stab-day" onclick="switchShareTab('day')">&#127947; Today</button>
+      <button class="stab" id="stab-week" onclick="switchShareTab('week')">&#128197; Full Week</button>
+    </div>
+    <div class="share-hint" id="shareHint"></div>
+    <textarea class="share-textarea" id="shareText" readonly spellcheck="false"></textarea>
+    <div class="share-footer">
+      <button class="share-copy" id="shareCopyBtn" onclick="copyShareText()">&#128203; Copy to Clipboard</button>
+      <button class="share-native" id="shareNativeBtn" onclick="nativeShare()">&#8679; Share</button>
+    </div>
+  </div>
+</div>
 
 <script>
 var WU='wu',STR='str',HYO='hyo',PMP='pmp';
@@ -619,7 +655,7 @@ function renderMain(){
     });
   });
 
-  h+='<div class="actions"><button class="rbtn" onclick="resetDay()">&#8635; Reset day</button><button class="ubtn" onclick="copyWeekSummary()">&#128203; Copy summary</button></div>';
+  h+='<div class="actions"><button class="rbtn" onclick="resetDay()">&#8635; Reset</button><button class="ubtn" onclick="openShare()">&#128203; Share / AI Report</button></div>';
   document.getElementById('mainArea').innerHTML=h;
   updateStats();
 
@@ -755,29 +791,230 @@ function updateStats(){
   }
 }
 
-// ── Copy summary ───────────────────────────────────────────────────────────────
-function copyWeekSummary(){
-  var d=curDay,w=curWeek,day=DAYS[d];
-  var lines=['Week '+w+' | '+day.day+' | '+day.focus,''];
+// ── Share / AI Report ──────────────────────────────────────────────────────────
+var shareTabMode='day';
+
+function openShare(){shareTabMode='day';buildShareContent();document.getElementById('shareOverlay').style.display='flex';}
+function closeShare(){document.getElementById('shareOverlay').style.display='none';}
+function switchShareTab(mode){
+  shareTabMode=mode;
+  document.getElementById('stab-day').classList.toggle('on',mode==='day');
+  document.getElementById('stab-week').classList.toggle('on',mode==='week');
+  buildShareContent();
+}
+
+function buildShareContent(){
+  var txt=shareTabMode==='day'?buildDayReport(curDay,curWeek):buildWeekReport(curWeek);
+  document.getElementById('shareText').value=txt;
+  var hint=shareTabMode==='day'
+    ?'<b>Today\'s session</b> — paste into Claude or any AI to get personalised coaching feedback on your lifts.'
+    :'<b>Full week log</b> — paste into Claude to get weekly analysis, progressive overload suggestions, and recovery notes.';
+  document.getElementById('shareHint').innerHTML=hint;
+  var nb=document.getElementById('shareNativeBtn');
+  nb.style.display=navigator.share?'':'none';
+}
+
+function dayStats(d,w){
+  var day=DAYS[d];
+  var total=0,done=0,wsets=0,vol=0,hitCount=0,missCount=0;
+  if(day.isRest)return{total:0,done:0,wsets:0,vol:0,hitCount:0,missCount:0,pct:0};
   day.sections.forEach(function(sec,s){
-    lines.push('── '+sec.name+' ──');
     sec.exercises.forEach(function(ex,e){
-      lines.push(ex.name+':');
+      total++;if(ST[dk(w,d,s,e)])done++;
       ex.sets.forEach(function(set,si){
-        var wv=ST[sk(w,d,s,e,si,'w')]||'?';
-        var rv=ST[sk(w,d,s,e,si,'r')];
-        var done=rv!==''?rv+'/'+set.r+' reps':'—';
-        lines.push('  '+set.l+' '+wv+'kg  '+done);
+        if(!set.tr)return;
+        var r=parseInt(ST[sk(w,d,s,e,si,'r')])||0;
+        var wv=parseFloat(ST[sk(w,d,s,e,si,'w')])||0;
+        if(r>0){
+          wsets++;vol+=r*wv;
+          if(r>=set.r)hitCount++;else missCount++;
+        }
       });
     });
-    lines.push('');
   });
-  var txt=lines.join('\n');
-  if(navigator.clipboard){
-    navigator.clipboard.writeText(txt).then(function(){showToast();}).catch(function(){prompt('Copy this:',txt);});
+  return{total:total,done:done,wsets:wsets,vol:Math.round(vol),hitCount:hitCount,missCount:missCount,pct:total>0?Math.round(done/total*100):0};
+}
+
+function buildDayReport(d,w){
+  var day=DAYS[d];
+  var today=new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  var stat=dayStats(d,w);
+  var isSkipped=ST[sk2(w,d)];
+  var lines=[];
+
+  lines.push('# TESI Trainer — Week '+w+' | '+day.day);
+  lines.push('**Focus:** '+day.focus+'  |  **Date:** '+today);
+  lines.push('**Athlete profile:** 75 kg body weight · 170 cm · Bench 1RM ~56 kg · Hisar, Haryana · 6 AM sessions');
+  lines.push('');
+
+  if(day.isRest){
+    lines.push('## Rest Day');
+    lines.push('No training logged. Recovery, sleep, nutrition focus.');
+    lines.push('');
+  } else if(isSkipped){
+    lines.push('## Session Status: SKIPPED');
+    lines.push('This day was marked as skipped / rest substitution.');
+    lines.push('');
   } else {
-    prompt('Copy this:',txt);
+    lines.push('## Session Summary');
+    lines.push('| Metric | Value |');
+    lines.push('|--------|-------|');
+    lines.push('| Status | '+(stat.pct===100?'✅ Complete':stat.wsets>0?'🔄 In Progress':'⬜ Not Started')+' |');
+    lines.push('| Exercises | '+stat.done+' / '+stat.total+' marked done |');
+    lines.push('| Working sets logged | '+stat.wsets+' |');
+    lines.push('| Total volume | '+stat.vol.toLocaleString()+' kg |');
+    lines.push('| Sets hit target | '+stat.hitCount+' ✅ |');
+    lines.push('| Sets missed target | '+stat.missCount+' ❌ |');
+    lines.push('| Completion | '+stat.pct+'% |');
+    lines.push('');
+
+    day.sections.forEach(function(sec,s){
+      lines.push('## '+sec.name);
+      sec.exercises.forEach(function(ex,e){
+        var exDone=ST[dk(w,d,s,e)];
+        lines.push('');
+        lines.push('### '+(exDone?'✅ ':'⬜ ')+ex.name);
+        if(ex.hint)lines.push('*Cue: '+ex.hint+'*');
+        lines.push('');
+        lines.push('| Set | Type | Target | Weight | Reps Done | Result |');
+        lines.push('|-----|------|--------|--------|-----------|--------|');
+        ex.sets.forEach(function(set,si){
+          var isWu=(set.t===WU);
+          var typeName={wu:'Warm-up',str:'Strength',hyo:'Hypertrophy',pmp:'Pump'}[set.t]||set.t;
+          var wv=ST[sk(w,d,s,e,si,'w')];wv=(wv!=null&&wv!=='')?wv+'kg':'—';
+          var rv=ST[sk(w,d,s,e,si,'r')];
+          var repsDone=(rv!=null&&rv!=='')?rv:'—';
+          var result='—';
+          if(!isWu&&rv!==''&&rv!=null){
+            result=parseInt(rv)>=set.r?'✅ Hit':'❌ Miss (−'+(set.r-parseInt(rv))+')';
+          }
+          lines.push('| '+set.l+' | '+typeName+' | '+set.r+(set.r===1?'x':'r')+' | '+wv+' | '+repsDone+' | '+result+' |');
+        });
+      });
+      lines.push('');
+    });
   }
+
+  lines.push('---');
+  lines.push('## Context for AI Analysis');
+  lines.push('- Program: 6-day PPL-style split (Mon=Chest+Tri, Tue=Back+Bi, Wed=Legs+Core, Thu=Shoulders+Traps, Fri=Arms, Sat=Full Body)');
+  lines.push('- Goal: Hypertrophy with strength foundation, progressive overload every 1-2 weeks');
+  lines.push('- Progression rule: When all HYO sets hit target reps, add 2.5 kg next session');
+  lines.push('');
+  lines.push('## Please Analyse');
+  lines.push('1. Which exercises show missed reps — are they systematic (fatigue, too heavy) or isolated?');
+  lines.push('2. Any weights I should increase or decrease for next session?');
+  lines.push('3. Volume/intensity balance for this muscle group — anything to flag?');
+  lines.push('4. One specific technique or pacing tip for my weakest lift today.');
+
+  return lines.join('\n');
+}
+
+function buildWeekReport(w){
+  var today=new Date().toLocaleDateString('en-IN',{year:'numeric',month:'long',day:'numeric'});
+  var lines=[];
+  lines.push('# TESI Trainer — Week '+w+' Full Report');
+  lines.push('**Generated:** '+today+'  |  **Athlete:** 75 kg · 170 cm · Bench 1RM ~56 kg · Hisar, Haryana');
+  lines.push('');
+
+  // Week overview table
+  lines.push('## Week Overview');
+  lines.push('| Day | Focus | Status | Volume | Sets | Hit% |');
+  lines.push('|-----|-------|--------|--------|------|------|');
+  var weekVol=0,weekSets=0,weekHit=0,weekMiss=0,trainDays=0,doneDays=0,skippedDays=0;
+  DAYS.forEach(function(day,d){
+    if(day.isRest){
+      lines.push('| '+day.label+' | Rest | 😴 Rest | — | — | — |');
+      return;
+    }
+    var isSkipped=ST[sk2(w,d)];
+    if(isSkipped){skippedDays++;lines.push('| '+day.label+' | '+day.focus+' | ⏭ Skipped | — | — | — |');return;}
+    trainDays++;
+    var stat=dayStats(d,w);
+    weekVol+=stat.vol;weekSets+=stat.wsets;weekHit+=stat.hitCount;weekMiss+=stat.missCount;
+    var hitPct=stat.hitCount+stat.missCount>0?Math.round(stat.hitCount/(stat.hitCount+stat.missCount)*100)+'%':'—';
+    var status=stat.pct===100?'✅ Done':stat.wsets>0?'🔄 Partial':'⬜ No data';
+    if(stat.pct===100)doneDays++;
+    lines.push('| '+day.label+' | '+day.focus+' | '+status+' | '+stat.vol.toLocaleString()+' kg | '+stat.wsets+' | '+hitPct+' |');
+  });
+  lines.push('');
+
+  lines.push('## Week Totals');
+  lines.push('| Metric | Value |');
+  lines.push('|--------|-------|');
+  lines.push('| Training days logged | '+trainDays+' / 6 |');
+  lines.push('| Days fully completed | '+doneDays+' |');
+  lines.push('| Days skipped | '+skippedDays+' |');
+  lines.push('| Total volume | '+weekVol.toLocaleString()+' kg |');
+  lines.push('| Total working sets | '+weekSets+' |');
+  var totalAttempts=weekHit+weekMiss;
+  lines.push('| Sets hit target | '+weekHit+' / '+totalAttempts+' ('+(totalAttempts>0?Math.round(weekHit/totalAttempts*100)+'%':'—')+') |');
+  lines.push('');
+
+  // Per-day detail
+  lines.push('---');
+  lines.push('## Detailed Day Logs');
+  DAYS.forEach(function(day,d){
+    if(day.isRest)return;
+    var isSkipped=ST[sk2(w,d)];
+    lines.push('');
+    lines.push('### '+day.label+' — '+day.focus+(isSkipped?' *(Skipped)*':''));
+    if(isSkipped)return;
+    day.sections.forEach(function(sec,s){
+      lines.push('**'+sec.name+'**');
+      sec.exercises.forEach(function(ex,e){
+        var exDone=ST[dk(w,d,s,e)];
+        var setStr=ex.sets.map(function(set,si){
+          if(set.t===WU)return null;
+          var wv=ST[sk(w,d,s,e,si,'w')];wv=(wv!=null&&wv!=='')?wv+'kg':'?kg';
+          var rv=ST[sk(w,d,s,e,si,'r')];
+          var done=(rv!=null&&rv!=='')?rv+'/'+set.r:(set.t===WU?null:'—/'+set.r);
+          return wv+'×'+done+(parseInt(rv)>=set.r?' ✅':rv!=null&&rv!==''?' ❌':'');
+        }).filter(Boolean).join(' | ');
+        lines.push('- '+(exDone?'✅':'⬜')+' **'+ex.name+'**: '+(setStr||'No data logged'));
+      });
+    });
+  });
+  lines.push('');
+  lines.push('---');
+  lines.push('## Context for AI Analysis');
+  lines.push('- 6-day split: PPL-style with dedicated arms day and full-body Saturday');
+  lines.push('- Progression: Add 2.5 kg when all working sets hit target for 2 consecutive sessions');
+  lines.push('- Goal: Lean bulk — hypertrophy primary, strength secondary');
+  lines.push('- Nutrition: ~2,350 kcal/training day, ~148g protein');
+  lines.push('');
+  lines.push('## Please Analyse My Week '+w);
+  lines.push('1. **Volume & Recovery** — is weekly volume per muscle group appropriate? Any under/over-trained groups?');
+  lines.push('2. **Progressive Overload** — based on hit/miss data, which lifts are ready for weight increases next week?');
+  lines.push('3. **Weak Points** — which exercises show the most missed sets? Likely cause and fix?');
+  lines.push('4. **Week '+( w+1)+' Recommendations** — specific weight targets for my main compounds (Bench, Row, Squat, Deadlift).');
+  lines.push('5. **Recovery** — any red flags given skipped days or volume spikes?');
+
+  return lines.join('\n');
+}
+
+function copyShareText(){
+  var txt=document.getElementById('shareText').value;
+  var btn=document.getElementById('shareCopyBtn');
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(txt).then(function(){
+      btn.textContent='✅ Copied!';
+      btn.classList.add('share-copied');
+      setTimeout(function(){btn.textContent='📋 Copy to Clipboard';btn.classList.remove('share-copied');},2000);
+    }).catch(function(){fallbackCopy(txt);});
+  } else {
+    fallbackCopy(txt);
+  }
+}
+function fallbackCopy(txt){
+  var ta=document.getElementById('shareText');
+  ta.select();ta.setSelectionRange(0,999999);
+  try{document.execCommand('copy');showToast();}catch(e){alert('Select all text in the box and copy manually.');}
+}
+function nativeShare(){
+  var txt=document.getElementById('shareText').value;
+  var day=DAYS[curDay];
+  navigator.share({title:'TESI Trainer — Week '+curWeek+(shareTabMode==='day'?' | '+day.day:' Full Report'),text:txt}).catch(function(){});
 }
 
 // ── Meal ───────────────────────────────────────────────────────────────────────
