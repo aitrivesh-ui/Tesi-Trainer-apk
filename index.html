@@ -171,6 +171,57 @@ html,body{width:100%;overflow-x:hidden;background:#0a0a0f;font-family:'Inter',sa
 .vrow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
 .vchip{font-size:11px;background:var(--bg3);border:1px solid var(--bdr);border-radius:20px;padding:4px 12px;color:var(--t2)}
 .vchip b{color:var(--t1);font-weight:500}
+/* ── Rest timer ── */
+.rest-bar{position:fixed;bottom:76px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--bdr2);border-radius:16px;padding:10px 18px;display:flex;align-items:center;gap:14px;z-index:60;min-width:260px;max-width:90vw;box-shadow:0 4px 24px rgba(0,0,0,.5)}
+.rest-type{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;min-width:60px}
+.rest-count{font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;color:var(--accent);flex:1;text-align:center;letter-spacing:1px;line-height:1}
+.rest-bar.done .rest-count{color:var(--pmp)}
+.rest-skip{font-size:12px;color:var(--t3);cursor:pointer;padding:5px 10px;border:1px solid var(--bdr2);border-radius:6px;background:var(--bg4);white-space:nowrap}
+/* ── PR banner ── */
+.pr-banner{position:fixed;top:-90px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#0d1f0d,#0a0f0a);border:1px solid var(--accent);border-radius:14px;padding:12px 20px;z-index:200;min-width:280px;max-width:90vw;transition:top .4s cubic-bezier(.34,1.56,.64,1);cursor:pointer;text-align:center;box-shadow:0 4px 32px rgba(0,229,160,.3)}
+.pr-banner.show{top:14px}
+.pr-banner-title{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--accent)}
+.pr-banner-sub{font-size:12px;color:var(--t2);margin-top:3px}
+/* ── PR board ── */
+.pr-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:150;display:flex;align-items:flex-end;justify-content:center}
+.pr-sheet{background:var(--bg2);border-radius:20px 20px 0 0;border:1px solid var(--bdr2);width:100%;max-width:600px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden}
+.pr-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid var(--bdr);flex-shrink:0}
+.pr-title{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--accent)}
+.pr-list{overflow-y:auto;flex:1;padding:0}
+.pr-item{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid var(--bdr)}
+.pr-rank{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--t3);width:28px;flex-shrink:0}
+.pr-exnm{font-size:13px;font-weight:500;color:var(--t1);flex:1;padding:0 10px}
+.pr-vals{text-align:right;flex-shrink:0}
+.pr-lift{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:var(--accent)}
+.pr-orm{font-size:10px;color:var(--t3);margin-top:1px}
+.pr-date{font-size:10px;color:var(--t3)}
+.pr-empty{padding:40px 20px;text-align:center;color:var(--t3);font-size:13px;line-height:1.8}
+/* ── Bodyweight ── */
+.bw-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--t3);cursor:pointer;padding:3px 9px;border:1px solid var(--bdr);border-radius:20px;background:var(--bg3);vertical-align:middle;margin-left:4px}
+.bw-spark{display:inline-flex;align-items:flex-end;gap:1px;height:12px}
+.bw-bar{width:3px;background:var(--accent);border-radius:1px;opacity:.7;min-height:2px}
+.bw-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:150;display:flex;align-items:center;justify-content:center;padding:20px}
+.bw-card{background:var(--bg2);border:1px solid var(--bdr2);border-radius:16px;padding:22px;width:100%;max-width:340px}
+.bw-head{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--t1);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.bw-inp-row{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.bw-inp{flex:1;background:var(--bg4);border:1px solid var(--bdr2);border-radius:8px;padding:12px;font-size:22px;text-align:center;color:var(--t1);font-family:'Rajdhani',sans-serif;outline:none;font-weight:700}
+.bw-inp:focus{border-color:var(--accent)}
+.bw-unit{font-size:14px;color:var(--t3);flex-shrink:0}
+.bw-log-list{max-height:180px;overflow-y:auto;margin-bottom:14px}
+.bw-log-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--bdr);font-size:12px}
+.bw-log-date{color:var(--t3)}
+.bw-log-wv{color:var(--t1);font-weight:600;font-family:'Rajdhani',sans-serif;font-size:15px}
+.bw-log-delta{font-size:11px;margin-left:6px}
+.bw-save{width:100%;padding:13px;background:var(--accent);border:none;border-radius:10px;color:#000;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif}
+/* ── Session timer / 1RM / Overload ── */
+.sess-timer{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--str);line-height:1}
+.orm-chip{font-size:9px;color:var(--str);background:var(--sdim);border-radius:4px;padding:1px 5px;margin-top:2px;display:block;text-align:center;min-height:13px}
+.ol-badge{font-size:10px;color:var(--accent);background:var(--adim);border:1px solid rgba(0,229,160,.3);border-radius:5px;padding:1px 6px;margin-left:5px;vertical-align:middle;display:inline-block}
+/* ── Notes ── */
+.day-notes-wrap{margin-bottom:16px}
+.day-notes-lbl{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.day-notes-ta{width:100%;background:var(--bg3);border:1px solid var(--bdr2);border-radius:10px;padding:10px 12px;color:var(--t2);font-size:13px;font-family:'Inter',sans-serif;resize:none;outline:none;min-height:58px;line-height:1.5}
+.day-notes-ta:focus{border-color:var(--accent);color:var(--t1)}
 </style>
 </head>
 <body>
@@ -181,7 +232,11 @@ html,body{width:100%;overflow-x:hidden;background:#0a0a0f;font-family:'Inter',sa
     <div class="logo">TESI <span>TRAINER</span></div>
     <div style="font-size:11px;color:var(--t3);text-align:right;line-height:1.5">75 kg &middot; 170 cm<br>Hisar, Haryana</div>
   </div>
-  <div class="sub">Bench 1RM ~56 kg &middot; 6-day split &middot; 6 AM morning</div>
+  <div style="display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap">
+    <div class="sub" style="margin:0">Bench 1RM ~56 kg &middot; 6-day split &middot; 6 AM</div>
+    <span class="bw-chip" onclick="openBW()">&#9878; <span id="bwToday">--</span> kg<span class="bw-spark" id="bwSpark"></span></span>
+    <button onclick="openPR()" style="font-size:11px;color:var(--pmp);background:var(--pdim);border:1px solid rgba(255,179,71,.3);border-radius:20px;padding:3px 10px;cursor:pointer">&#127942; PRs</button>
+  </div>
   <div class="week-row">
     <button class="wn-btn" onclick="changeWeek(-1)">&#8249;</button>
     <span class="wn-lbl" id="weekLabel">Week 1</span>
@@ -206,6 +261,44 @@ html,body{width:100%;overflow-x:hidden;background:#0a0a0f;font-family:'Inter',sa
 </div>
 
 <div class="save-toast" id="saveToast">Saved &#10003;</div>
+
+<!-- PR banner -->
+<div class="pr-banner" id="prBanner" onclick="openPR()">
+  <div class="pr-banner-title" id="prBannerTitle">&#127942; New PR!</div>
+  <div class="pr-banner-sub" id="prBannerSub"></div>
+</div>
+
+<!-- Rest timer bar -->
+<div class="rest-bar" id="restBar" style="display:none">
+  <span class="rest-type" id="restTypeLbl">Rest</span>
+  <span class="rest-count" id="restCount">1:30</span>
+  <button class="rest-skip" onclick="stopRestTimer()">Skip</button>
+</div>
+
+<!-- PR Board -->
+<div class="pr-overlay" id="prOverlay" style="display:none" onclick="if(event.target===this)closePR()">
+  <div class="pr-sheet">
+    <div class="pr-head">
+      <span class="pr-title">&#127942; Personal Records</span>
+      <button class="share-close" onclick="closePR()">&#10005;</button>
+    </div>
+    <div class="pr-list" id="prList"></div>
+  </div>
+</div>
+
+<!-- Bodyweight log -->
+<div class="bw-overlay" id="bwOverlay" style="display:none" onclick="if(event.target===this)closeBW()">
+  <div class="bw-card">
+    <div class="bw-head">&#9878; Body Weight <button class="share-close" onclick="closeBW()">&#10005;</button></div>
+    <div class="bw-inp-row">
+      <input class="bw-inp" type="number" id="bwInput" min="30" max="300" step="0.1" placeholder="75.0" inputmode="decimal">
+      <span class="bw-unit">kg</span>
+    </div>
+    <button class="bw-save" onclick="logBW()">Log Today&#8217;s Weight</button>
+    <div style="font-size:11px;color:var(--t3);margin:12px 0 6px;text-transform:uppercase;letter-spacing:.4px">History</div>
+    <div class="bw-log-list" id="bwLogList"></div>
+  </div>
+</div>
 
 <!-- Share Modal -->
 <div class="share-overlay" id="shareOverlay" style="display:none" onclick="if(event.target===this)closeShare()">
@@ -469,7 +562,14 @@ function initMissingKeys(){
         sec.exercises.forEach(function(ex,e){
           if(!(dk(w,d,s,e) in ST))ST[dk(w,d,s,e)]=false;
           ex.sets.forEach(function(set,si){
-            if(!(sk(w,d,s,e,si,'w') in ST))ST[sk(w,d,s,e,si,'w')]=w===1?set.w1:'';
+            if(!(sk(w,d,s,e,si,'w') in ST)){
+              if(w>1){
+                var pv=ST[sk(w-1,d,s,e,si,'w')];
+                ST[sk(w,d,s,e,si,'w')]=(pv!=null&&pv!=='')?pv:set.w1;
+              } else {
+                ST[sk(w,d,s,e,si,'w')]=set.w1;
+              }
+            }
             if(!(sk(w,d,s,e,si,'r') in ST))ST[sk(w,d,s,e,si,'r')]='';
           });
         });
@@ -556,7 +656,7 @@ function renderMain(){
   h+='<div class="sbox"><div class="sv" id="sDone">0</div><div class="sl">Done</div><div class="ss">of <span id="sTotal">0</span></div></div>';
   h+='<div class="sbox"><div class="sv" id="sSets">0</div><div class="sl">Sets</div></div>';
   h+='<div class="sbox"><div class="sv" id="sVol">0</div><div class="sl">Vol kg</div></div>';
-  h+='<div class="sbox"><div class="sv" id="sPct">0%</div><div class="sl">Progress</div></div>';
+  h+='<div class="sbox"><div class="sv sess-timer" id="sessTimerDisp">—</div><div class="sl">Time</div><div class="ss" id="sPct">0%</div></div>';
   h+='</div>';
   h+='<div class="prog"><div class="prog-fill" id="pFill" style="width:0%"></div></div>';
 
@@ -593,8 +693,15 @@ function renderMain(){
         h+='<input class="exnm-inp" id="exnm_'+s+'_'+e+'" value="'+esc(ex.name)+'">';
         h+='<input class="exhint-inp" id="exhint_'+s+'_'+e+'" value="'+esc(ex.hint)+'">';
       } else {
-        h+='<div class="exnm">'+esc(ex.name)+'</div>';
-        h+='<div class="exhint">'+esc(ex.hint)+'</div>';
+        var olReady=exReadyToProgress(d,s,e);
+        var prEntry=PR_HIST[ex.name];
+        h+='<div class="exnm">'+esc(ex.name);
+        if(olReady)h+='<span class="ol-badge" id="ol_'+s+'_'+e+'">&#8593; +2.5 kg</span>';
+        else h+='<span class="ol-badge" id="ol_'+s+'_'+e+'" style="display:none">&#8593; +2.5 kg</span>';
+        h+='</div>';
+        if(prEntry)h+='<div style="font-size:10px;color:var(--pmp);margin-top:3px">&#127942; PR: '+prEntry.weight+'kg&times;'+prEntry.reps+'r &middot; est. 1RM '+prEntry.orm+'kg</div>';
+        else h+='<div class="exhint">'+esc(ex.hint)+'</div>';
+        if(prEntry)h+='<div class="exhint" style="margin-top:1px">'+esc(ex.hint)+'</div>';
       }
       h+='</div>';
       h+='<div class="ex-actions">';
@@ -626,11 +733,14 @@ function renderMain(){
         } else {
           h+='<div style="font-size:14px;color:var(--t2);text-align:center;padding-top:8px">'+set.r+(set.r===1?'x':'r')+'</div>';
         }
-        // Done reps
+        // Done reps + 1RM chip
         if(isWu){
           h+='<div class="dash-cell">&mdash;</div>';
         } else {
-          h+='<div><input class="inp'+cls+'" type="number" min="0" value="'+rv+'" placeholder="-" oninput="saveR('+w+','+d+','+s+','+e+','+si+','+set.r+',this)" inputmode="numeric"></div>';
+          var wv_num=parseFloat(ST[sk(w,d,s,e,si,'w')])||0;
+          var rv_num=parseInt(rv)||0;
+          var orm_str=(wv_num>0&&rv_num>0)?'&#8776;'+epley(wv_num,rv_num)+'kg':'';
+          h+='<div><input class="inp'+cls+'" type="number" min="0" value="'+rv+'" placeholder="-" id="ri_'+s+'_'+e+'_'+si+'" oninput="saveR('+w+','+d+','+s+','+e+','+si+','+set.r+',this)" inputmode="numeric"><div class="orm-chip" id="orm_'+s+'_'+e+'_'+si+'">'+orm_str+'</div></div>';
         }
         // Delete set
         if(isEditing){
@@ -655,6 +765,10 @@ function renderMain(){
     });
   });
 
+  var noteKey='NOTE_'+w+'_'+d;
+  var noteVal=ST[noteKey]||'';
+  h+='<div class="day-notes-wrap"><div class="day-notes-lbl">&#128221; Session Notes</div>';
+  h+='<textarea class="day-notes-ta" placeholder="How did it feel? Anything to flag for next week..." onblur="saveNote(\''+noteKey+'\',this.value)">'+esc(noteVal)+'</textarea></div>';
   h+='<div class="actions"><button class="rbtn" onclick="resetDay()">&#8635; Reset</button><button class="ubtn" onclick="openShare()">&#128203; Share / AI Report</button></div>';
   document.getElementById('mainArea').innerHTML=h;
   updateStats();
@@ -747,6 +861,24 @@ function saveR(w,d,s,e,si,tgt,inp){
   ST[sk(curWeek,d,s,e,si,'r')]=v;
   inp.className='inp'+(v===''?'':(parseInt(v)>=tgt?' hit':' miss'));
   persist();updateStats();
+  if(v!==''){
+    ensureSessStart();
+    var setObj=DAYS[d].sections[s].exercises[e].sets[si];
+    if(setObj.t!==WU){
+      var wv=ST[sk(curWeek,d,s,e,si,'w')];
+      var exName=DAYS[d].sections[s].exercises[e].name;
+      var pr=checkPR(exName,wv,v);
+      if(pr)flashPR(pr);
+      // Update 1RM chip live
+      var ormEl=document.getElementById('orm_'+s+'_'+e+'_'+si);
+      if(ormEl){var wn=parseFloat(wv)||0,rn=parseInt(v)||0;ormEl.innerHTML=(wn>0&&rn>0)?'&#8776;'+epley(wn,rn)+'kg':'';}
+      // Rest timer
+      startRestTimer(setObj.t);
+    }
+    // Overload badge
+    var olEl=document.getElementById('ol_'+s+'_'+e);
+    if(olEl)olEl.style.display=exReadyToProgress(d,s,e)?'inline-block':'none';
+  }
 }
 function toggleDone(d,s,e){ST[dk(curWeek,d,s,e)]=!ST[dk(curWeek,d,s,e)];persist();renderTabs();renderMain();}
 function toggleSkip(){ST[sk2(curWeek,curDay)]=!ST[sk2(curWeek,curDay)];persist();renderTabs();renderMain();}
@@ -788,6 +920,7 @@ function updateStats(){
     document.getElementById('sVol').textContent=Math.round(vol);
     document.getElementById('sPct').textContent=pct+'%';
     document.getElementById('pFill').style.width=pct+'%';
+    updateSessDisplay();
   }
 }
 
@@ -901,6 +1034,8 @@ function buildDayReport(d,w){
   lines.push('- Goal: Hypertrophy with strength foundation, progressive overload every 1-2 weeks');
   lines.push('- Progression rule: When all HYO sets hit target reps, add 2.5 kg next session');
   lines.push('');
+  var noteVal=ST['NOTE_'+w+'_'+d];
+  if(noteVal){lines.push('## Session Notes (from athlete)');lines.push(noteVal);lines.push('');}
   lines.push('## Please Analyse');
   lines.push('1. Which exercises show missed reps — are they systematic (fatigue, too heavy) or isolated?');
   lines.push('2. Any weights I should increase or decrease for next session?');
@@ -1051,16 +1186,175 @@ function toggleGlass(i){
 }
 function toggleMeal(ck){MC[ck]=!MC[ck];persist();renderMeal();}
 
+// ── Notes ──────────────────────────────────────────────────────────────────────
+function saveNote(key,val){ST[key]=val;persist();}
+
 // ── Util ───────────────────────────────────────────────────────────────────────
 function esc(s){
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+function todayStr(){return new Date().toISOString().slice(0,10);}
+
+// ── Body Weight Log ────────────────────────────────────────────────────────────
+var BW_LOG=[];
+function loadBW(){try{var b=localStorage.getItem('tt_bwl');BW_LOG=b?JSON.parse(b):[];}catch(e){BW_LOG=[];}}
+function saveBW(){try{localStorage.setItem('tt_bwl',JSON.stringify(BW_LOG));}catch(e){}}
+function getBWToday(){var t=todayStr();for(var i=BW_LOG.length-1;i>=0;i--){if(BW_LOG[i].d===t)return BW_LOG[i].w;}return null;}
+function openBW(){
+  var cur=getBWToday();
+  var inp=document.getElementById('bwInput');
+  if(inp&&cur!=null)inp.value=cur;
+  renderBWLog();
+  document.getElementById('bwOverlay').style.display='flex';
+  setTimeout(function(){if(inp)inp.focus();},50);
+}
+function closeBW(){document.getElementById('bwOverlay').style.display='none';}
+function logBW(){
+  var inp=document.getElementById('bwInput');
+  var val=parseFloat(inp.value);
+  if(!val||val<20||val>300){inp.focus();return;}
+  var t=todayStr();
+  BW_LOG=BW_LOG.filter(function(x){return x.d!==t;});
+  BW_LOG.push({d:t,w:val});
+  BW_LOG.sort(function(a,b){return a.d<b.d?-1:1;});
+  saveBW();renderBWLog();updateBWChip();
+  closeBW();
+}
+function renderBWLog(){
+  var el=document.getElementById('bwLogList');if(!el)return;
+  var recent=BW_LOG.slice(-10).reverse();
+  if(!recent.length){el.innerHTML='<div style="color:var(--t3);font-size:12px;padding:8px 0">No entries yet.</div>';return;}
+  el.innerHTML=recent.map(function(e,i){
+    var next=recent[i+1];
+    var delta=next?(e.w-next.w):null;
+    var ds=delta!=null?'<span class="bw-log-delta" style="color:'+(delta>0?'var(--red)':delta<0?'var(--accent)':'var(--t3)')+'">'+(delta>0?'+':'')+delta.toFixed(1)+'</span>':'';
+    return '<div class="bw-log-row"><span class="bw-log-date">'+e.d+'</span><span class="bw-log-wv">'+e.w+' kg '+ds+'</span></div>';
+  }).join('');
+}
+function updateBWChip(){
+  var w=getBWToday();
+  var el=document.getElementById('bwToday');
+  if(el)el.textContent=w!=null?w:'--';
+  var spark=document.getElementById('bwSpark');if(!spark)return;
+  var recent=BW_LOG.slice(-10);
+  if(recent.length<2){spark.innerHTML='';return;}
+  var vals=recent.map(function(x){return x.w;});
+  var mn=Math.min.apply(null,vals),mx=Math.max.apply(null,vals),rng=mx-mn||1;
+  spark.innerHTML=vals.map(function(v){
+    var h=Math.max(2,Math.round((v-mn)/rng*12));
+    return '<span class="bw-bar" style="height:'+h+'px"></span>';
+  }).join('');
+}
+
+// ── PR History ─────────────────────────────────────────────────────────────────
+var PR_HIST={};
+function loadPR(){try{var p=localStorage.getItem('tt_prh');PR_HIST=p?JSON.parse(p):{};}catch(e){PR_HIST={}; }}
+function savePR(){try{localStorage.setItem('tt_prh',JSON.stringify(PR_HIST));}catch(e){}}
+function epley(w,r){var wn=parseFloat(w)||0,rn=parseInt(r)||0;return rn<=1?wn:Math.round(wn*(1+rn/30)*10)/10;}
+function checkPR(exName,weight,reps){
+  var wn=parseFloat(weight)||0,rn=parseInt(reps)||0;
+  if(!wn||rn<=0)return false;
+  var orm=epley(wn,rn);
+  var cur=PR_HIST[exName];
+  if(!cur||orm>cur.orm){
+    PR_HIST[exName]={weight:wn,reps:rn,orm:orm,date:todayStr(),week:curWeek};
+    savePR();
+    return {exName:exName,weight:wn,reps:rn,orm:orm};
+  }
+  return false;
+}
+function openPR(){renderPRBoard();document.getElementById('prOverlay').style.display='flex';}
+function closePR(){document.getElementById('prOverlay').style.display='none';}
+function renderPRBoard(){
+  var el=document.getElementById('prList');if(!el)return;
+  var entries=Object.keys(PR_HIST).map(function(k){return Object.assign({name:k},PR_HIST[k]);});
+  entries.sort(function(a,b){return b.orm-a.orm;});
+  if(!entries.length){el.innerHTML='<div class="pr-empty">No PRs logged yet.<br><br>Start entering reps and weights &mdash;<br>your personal records will appear here automatically.</div>';return;}
+  el.innerHTML=entries.map(function(e,i){
+    var medals=['&#127941;','&#129353;','&#129354;'];
+    var rank=i<3?medals[i]:'#'+(i+1);
+    return '<div class="pr-item"><span class="pr-rank">'+rank+'</span><span class="pr-exnm">'+esc(e.name)+'</span><div class="pr-vals"><div class="pr-lift">'+e.weight+'kg &times; '+e.reps+'r</div><div class="pr-orm">est. 1RM '+e.orm+' kg</div><div class="pr-date">'+e.date+' &middot; Wk '+e.week+'</div></div></div>';
+  }).join('');
+}
+var prBannerTimer;
+function flashPR(pr){
+  var banner=document.getElementById('prBanner');if(!banner)return;
+  document.getElementById('prBannerTitle').textContent='🏆 New PR — '+pr.exName;
+  document.getElementById('prBannerSub').textContent=pr.weight+'kg × '+pr.reps+' reps  |  est. 1RM '+pr.orm+' kg';
+  banner.classList.add('show');
+  clearTimeout(prBannerTimer);
+  prBannerTimer=setTimeout(function(){banner.classList.remove('show');},3500);
+}
+
+// ── Rest Timer ─────────────────────────────────────────────────────────────────
+var REST_DUR={wu:60,str:180,hyo:90,pmp:60};
+var restState={active:false,remaining:0,total:0,type:'',iid:null};
+function startRestTimer(type){
+  clearInterval(restState.iid);
+  var dur=REST_DUR[type]||90;
+  restState={active:true,remaining:dur,total:dur,type:type,iid:null};
+  var bar=document.getElementById('restBar');if(bar)bar.style.display='flex';
+  updateRestDisplay();
+  restState.iid=setInterval(function(){
+    restState.remaining=Math.max(0,restState.remaining-1);
+    if(restState.remaining===0){clearInterval(restState.iid);if(navigator.vibrate)navigator.vibrate([200,100,200,100,200]);}
+    updateRestDisplay();
+  },1000);
+}
+function stopRestTimer(){
+  clearInterval(restState.iid);restState.active=false;
+  var bar=document.getElementById('restBar');if(bar)bar.style.display='none';
+}
+function updateRestDisplay(){
+  var bar=document.getElementById('restBar');if(!bar||bar.style.display==='none')return;
+  var m=Math.floor(restState.remaining/60),s=restState.remaining%60;
+  document.getElementById('restCount').textContent=restState.remaining===0?'Done!':(m+':'+(s<10?'0':'')+s);
+  document.getElementById('restTypeLbl').textContent={wu:'Warm-up',str:'Strength (3 min)',hyo:'Hypertrophy (90s)',pmp:'Pump (60s)'}[restState.type]||'Rest';
+  bar.classList.toggle('done',restState.remaining===0);
+}
+
+// ── Session Timer ──────────────────────────────────────────────────────────────
+var sessTimerIid=null;
+function getSessKey(){return 'SSTART_'+curWeek+'_'+curDay;}
+function ensureSessStart(){
+  var k=getSessKey();
+  if(!ST[k]){ST[k]=Date.now();persist();}
+  if(!sessTimerIid)sessTimerIid=setInterval(updateSessDisplay,1000);
+}
+function updateSessDisplay(){
+  var el=document.getElementById('sessTimerDisp');if(!el)return;
+  var start=ST[getSessKey()];
+  if(!start){el.textContent='—';return;}
+  var elapsed=Math.floor((Date.now()-start)/1000);
+  var m=Math.floor(elapsed/60),s=elapsed%60;
+  el.textContent=m+(s<10?':0':':')+s;
+}
+function resumeSessTimer(){
+  var k=getSessKey();
+  if(ST[k]&&!sessTimerIid)sessTimerIid=setInterval(updateSessDisplay,1000);
+}
+
+// ── Progressive Overload ───────────────────────────────────────────────────────
+function exReadyToProgress(d,s,e){
+  var ex=DAYS[d].sections[s].exercises[e];
+  var w=curWeek,hasWorking=false,allHit=true;
+  ex.sets.forEach(function(set,si){
+    if(!set.tr)return;
+    hasWorking=true;
+    var rv=ST[sk(w,d,s,e,si,'r')];
+    if(rv===''||rv==null||parseInt(rv)<set.r)allHit=false;
+  });
+  return hasWorking&&allHit;
+}
 
 // ── Boot ───────────────────────────────────────────────────────────────────────
 loadState();
+loadBW();
+loadPR();
 initMissingKeys();
 document.getElementById('weekLabel').textContent='Week '+curWeek;
 document.getElementById('weekBadge').textContent='WK '+curWeek;
+updateBWChip();
 if(curTab==='meal'){
   document.getElementById('workoutTab').style.display='none';
   document.getElementById('mealTab').style.display='';
@@ -1069,6 +1363,7 @@ if(curTab==='meal'){
   renderMeal();
 }
 renderTabs();renderMain();
+resumeSessTimer();
 </script>
 </body>
 </html>
