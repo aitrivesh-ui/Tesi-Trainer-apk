@@ -354,7 +354,8 @@ html,body{width:100%;overflow-x:hidden;background:#0a0a0f;font-family:'Inter',sa
 
 <div class="nav">
   <button class="nb on" onclick="switchTab('workout',this)" id="nb-w">&#127947; Workout</button>
-  <button class="nb" onclick="switchTab('meal',this)" id="nb-m">&#127825; Meal Plan</button>
+  <button class="nb" onclick="switchTab('meal',this)" id="nb-m">&#127825; Meal</button>
+  <button class="nb" onclick="openUserPicker()" id="nb-p">&#128100; Profile</button>
 </div>
 
 <div id="workoutTab">
@@ -1563,12 +1564,12 @@ function renderUserCards(){
   el.innerHTML=USERS.map(function(u,i){
     var col=u.color||UP_COLORS[i%UP_COLORS.length];
     var ini=(u.name||'?').trim().charAt(0).toUpperCase();
-    return '<div class="ucard" onclick="switchToUser(\''+u.id+'\')">'
+    return '<button class="ucard" onclick="switchToUser(\''+u.id+'\')" style="text-align:center;width:100%;background:var(--bg2);border:1px solid var(--bdr2);border-radius:14px;padding:18px 12px;cursor:pointer;position:relative;touch-action:manipulation">'
       +'<div class="ucard-av" style="background:'+col+'">'+ini+'</div>'
       +'<div class="ucard-nm">'+esc(u.name||'User')+'</div>'
       +'<div class="ucard-info">'+(u.weight?u.weight+' kg':'')+(u.weight&&u.location?' &middot; ':'')+(u.location?esc(u.location):'')+'</div>'
-      +'<button class="ucard-edit" onclick="event.stopPropagation();openUPMod(\''+u.id+'\')">&#9998;</button>'
-      +'</div>';
+      +'<span class="ucard-edit" onclick="event.stopPropagation();openUPMod(\''+u.id+'\')">&#9998;</span>'
+      +'</button>';
   }).join('');
 }
 
