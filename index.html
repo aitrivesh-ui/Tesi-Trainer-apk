@@ -247,6 +247,36 @@ html,body{width:100%;overflow-x:hidden;background:#0a0a0f;font-family:'Inter',sa
 .day-notes-lbl{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
 .day-notes-ta{width:100%;background:var(--bg3);border:1px solid var(--bdr2);border-radius:10px;padding:10px 12px;color:var(--t2);font-size:13px;font-family:'Inter',sans-serif;resize:none;outline:none;min-height:58px;line-height:1.5}
 .day-notes-ta:focus{border-color:var(--accent);color:var(--t1)}
+/* ── Meal edit modal ── */
+.meal-edit-ov{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:350;display:flex;align-items:flex-end;justify-content:center}
+.meal-edit-sh{background:var(--bg2);border-radius:20px 20px 0 0;border:1px solid var(--bdr2);width:100%;max-width:600px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+.me-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid var(--bdr);flex-shrink:0}
+.me-body{flex:1;overflow-y:auto;padding:14px 18px 4px}
+.me-foot{padding:12px 18px 28px;border-top:1px solid var(--bdr);display:flex;gap:10px;flex-shrink:0}
+.me-lbl{font-size:11px;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.me-inp{width:100%;background:var(--bg4);border:1px solid var(--bdr2);border-radius:8px;padding:10px 12px;color:var(--t1);font-size:14px;font-family:'Inter',sans-serif;outline:none;margin-bottom:10px;display:block}
+.me-inp:focus{border-color:var(--accent)}
+.me-2col{display:flex;gap:8px;margin-bottom:10px}
+.me-2col>div{flex:1}
+.me-food-row{display:flex;align-items:flex-start;gap:6px;margin-bottom:8px;background:var(--bg3);border-radius:8px;padding:8px 10px}
+.me-fi{background:var(--bg4);border:1px solid var(--bdr2);border-radius:6px;padding:7px 8px;color:var(--t1);font-size:12px;font-family:'Inter',sans-serif;outline:none;width:100%}
+.me-fi:focus{border-color:var(--accent)}
+.me-del-f{background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:4px 2px;flex-shrink:0;line-height:1;margin-top:4px}
+.me-del-f:active{color:var(--red)}
+.me-add-f{font-size:12px;color:var(--str);background:var(--sdim);border:1px solid rgba(77,166,255,.25);border-radius:6px;padding:8px;cursor:pointer;width:100%;margin-top:2px;margin-bottom:14px;font-family:'Inter',sans-serif}
+/* ── Notification toggles ── */
+.notif-row{display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;padding:12px 14px;margin-bottom:8px}
+.notif-lbl{flex:1}
+.notif-lbl-top{font-size:13px;color:var(--t2)}
+.notif-lbl-sub{font-size:11px;color:var(--t3);margin-top:2px}
+.ntog{width:44px;height:24px;border-radius:12px;border:none;background:var(--bg4);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.ntog.on{background:var(--accent)}
+.ntog::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .2s}
+.ntog.on::after{left:23px}
+/* ── Meal card edit btn ── */
+.m-edit-btn{font-size:10px;color:var(--t3);background:var(--bg3);border:1px solid var(--bdr2);border-radius:5px;padding:3px 7px;cursor:pointer;flex-shrink:0}
+.meal-add-btn{font-size:13px;color:var(--accent);background:var(--adim);border:1px solid rgba(0,229,160,.25);border-radius:10px;padding:12px;cursor:pointer;width:100%;margin-bottom:10px;text-align:center;font-family:'Inter',sans-serif}
+.meal-reset-lnk{font-size:11px;color:var(--t3);cursor:pointer;text-decoration:underline;display:block;text-align:center;margin-bottom:14px;background:none;border:none;font-family:'Inter',sans-serif}
 </style>
 </head>
 <body>
@@ -365,6 +395,37 @@ html,body{width:100%;overflow-x:hidden;background:#0a0a0f;font-family:'Inter',sa
     <div class="share-footer">
       <button class="share-copy" id="shareCopyBtn" onclick="copyShareText()">&#128203; Copy to Clipboard</button>
       <button class="share-native" id="shareNativeBtn" onclick="nativeShare()">&#8679; Share</button>
+    </div>
+  </div>
+</div>
+
+<!-- Meal Edit Modal -->
+<div class="meal-edit-ov" id="mealEditOv" style="display:none" onclick="if(event.target===this)closeMealEdit()">
+  <div class="meal-edit-sh">
+    <div class="me-head">
+      <span style="font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--t1)" id="meTitle">Edit Meal</span>
+      <button class="share-close" onclick="closeMealEdit()">&#10005;</button>
+    </div>
+    <div class="me-body">
+      <div class="me-lbl">Meal Name</div>
+      <input class="me-inp" id="meNm" placeholder="e.g. Pre-workout">
+      <div class="me-2col">
+        <div><div class="me-lbl">Time</div><input class="me-inp" id="meTm" placeholder="5:30 AM" style="margin:0"></div>
+        <div><div class="me-lbl">Calories</div><input class="me-inp" id="meKc" placeholder="~200 kcal" style="margin:0"></div>
+      </div>
+      <div style="margin-top:12px" class="me-lbl">Foods</div>
+      <div id="meFoods"></div>
+      <button class="me-add-f" onclick="addMealFood()">+ Add Food</button>
+      <div class="me-lbl">Daily Macros (optional — updates plan summary)</div>
+      <div class="me-2col">
+        <div><input class="me-inp" id="meMKcal" placeholder="kcal e.g. 2350" style="margin:0"></div>
+        <div><input class="me-inp" id="meMPro" placeholder="protein e.g. 148g" style="margin:0"></div>
+        <div><input class="me-inp" id="meMCarb" placeholder="carbs e.g. 260g" style="margin:0"></div>
+      </div>
+    </div>
+    <div class="me-foot">
+      <button onclick="saveMealEdit()" style="flex:2;padding:13px;background:var(--accent);border:none;border-radius:10px;color:#000;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">Save</button>
+      <button id="meDelBtn" onclick="deleteMealItem()" style="flex:1;padding:13px;background:var(--rdim);border:1px solid rgba(255,77,109,.3);border-radius:10px;color:var(--red);font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;display:none">Delete</button>
     </div>
   </div>
 </div>
@@ -574,6 +635,8 @@ function loadState(){
     ST={};MC={};WG=0;curDay=0;curWeek=1;curTab='workout';mealType='workout';
   }
   editingEx=null;
+  loadCustomMeals();
+  loadNotifPrefs();
 }
 
 function persist(){
@@ -1203,28 +1266,181 @@ function nativeShare(){
   navigator.share({title:'TESI Trainer — Week '+curWeek+(shareTabMode==='day'?' | '+day.day:' Full Report'),text:txt}).catch(function(){});
 }
 
-// ── Meal ───────────────────────────────────────────────────────────────────────
-function renderMeal(){
-  var plan=MEALS[mealType];
-  var h='<div class="meal-toggle"><button class="mtog'+(mealType==='workout'?' on':'')+'" onclick="setMT(\'workout\')">&#127947; Workout day</button><button class="mtog'+(mealType==='rest'?' on':'')+'" onclick="setMT(\'rest\')">&#128564; Rest day</button></div>';
-  h+='<div style="font-size:12px;color:var(--t3);margin-bottom:12px">'+plan.note+'</div>';
-  h+='<div class="macros"><div class="mbox"><div class="mv">'+plan.macros.kcal+'</div><div class="ml">kcal/day</div></div><div class="mbox"><div class="mv">'+plan.macros.pro+'</div><div class="ml">protein</div></div><div class="mbox"><div class="mv">'+plan.macros.carb+'</div><div class="ml">carbs</div></div></div>';
-  h+='<div class="water-box"><div class="wlbl">Water &mdash; 3.5L target (14 glasses)</div><div class="glasses">';
-  for(var i=0;i<14;i++){
-    h+='<button class="glbtn'+(i<WG?' on':'')+'" onclick="toggleGlass('+i+')">&#128167;</button>';
+// ── Custom Meals ───────────────────────────────────────────────────────────────
+var CUSTOM_MEALS={};
+function loadCustomMeals(){try{var m=localStorage.getItem(uPfx('meals'));CUSTOM_MEALS=m?JSON.parse(m):{};}catch(e){CUSTOM_MEALS={};}}
+function saveCustomMeals(){try{localStorage.setItem(uPfx('meals'),JSON.stringify(CUSTOM_MEALS));}catch(e){}}
+function getActiveMealPlan(){
+  if(CUSTOM_MEALS[mealType])return CUSTOM_MEALS[mealType];
+  return JSON.parse(JSON.stringify(MEALS[mealType]));
+}
+
+// ── Notifications ──────────────────────────────────────────────────────────────
+var NOTIF_PREFS={m:false,w:false};
+var notifCheckIid=null;
+var notifFiredToday={};
+function loadNotifPrefs(){try{var n=localStorage.getItem(uPfx('notifp'));NOTIF_PREFS=n?JSON.parse(n):{m:false,w:false};}catch(e){NOTIF_PREFS={m:false,w:false};}}
+function saveNotifPrefs(){try{localStorage.setItem(uPfx('notifp'),JSON.stringify(NOTIF_PREFS));}catch(e){}}
+function toggleMealNotif(){
+  if(!NOTIF_PREFS.m){
+    reqNotifPerm(function(ok){if(ok){NOTIF_PREFS.m=true;saveNotifPrefs();startNotifChecker();renderMeal();}});
+  } else {NOTIF_PREFS.m=false;saveNotifPrefs();renderMeal();}
+}
+function toggleWaterNotif(){
+  if(!NOTIF_PREFS.w){
+    reqNotifPerm(function(ok){if(ok){NOTIF_PREFS.w=true;saveNotifPrefs();startNotifChecker();renderMeal();}});
+  } else {NOTIF_PREFS.w=false;saveNotifPrefs();renderMeal();}
+}
+function reqNotifPerm(cb){
+  if(!('Notification' in window)){showToast('Not supported');cb(false);return;}
+  if(Notification.permission==='granted'){cb(true);return;}
+  if(Notification.permission==='denied'){alert('Notifications blocked. Enable them in Chrome site settings.');cb(false);return;}
+  Notification.requestPermission().then(function(p){cb(p==='granted');});
+}
+function startNotifChecker(){
+  if(notifCheckIid)return;
+  notifCheckIid=setInterval(checkNotifs,60000);
+  checkNotifs();
+}
+function checkNotifs(){
+  if(!('Notification' in window)||Notification.permission!=='granted')return;
+  var now=new Date();
+  var today=now.toISOString().slice(0,10);
+  if(notifFiredToday._d!==today)notifFiredToday={_d:today};
+  if(NOTIF_PREFS.m){
+    var plan=getActiveMealPlan();
+    plan.items.forEach(function(meal,mi){
+      var fk='ml'+mi;
+      if(notifFiredToday[fk])return;
+      var t=parseMealTime(meal.tm);
+      if(!t)return;
+      var diff=(t.h*60+t.m)-(now.getHours()*60+now.getMinutes());
+      if(diff>=0&&diff<=1){
+        notifFiredToday[fk]=true;
+        try{new Notification('TESI — '+meal.nm,{body:'Time to eat! '+meal.kc,icon:'./icons/icon-192.png',silent:false});}catch(e){}
+      }
+    });
   }
+  if(NOTIF_PREFS.w){
+    var wh=now.getHours(),wk='wt'+wh;
+    if(!notifFiredToday[wk]&&wh>=6&&wh<=22&&wh%2===0){
+      notifFiredToday[wk]=true;
+      try{new Notification('TESI — Water Reminder',{body:'Drink a glass! '+WG+'/14 today.',icon:'./icons/icon-192.png',silent:false});}catch(e){}
+    }
+  }
+}
+function parseMealTime(tm){
+  if(!tm)return null;
+  var m=String(tm).match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+  if(!m)return null;
+  var h=parseInt(m[1]),mn=parseInt(m[2]),ap=(m[3]||'').toUpperCase();
+  if(ap==='PM'&&h!==12)h+=12;
+  if(ap==='AM'&&h===12)h=0;
+  return{h:h,m:mn};
+}
+
+// ── Meal editing ───────────────────────────────────────────────────────────────
+var editingMealIdx=-1;
+function openMealEdit(idx){
+  var plan=getActiveMealPlan();
+  editingMealIdx=idx;
+  var isNew=idx===-1;
+  document.getElementById('meTitle').textContent=isNew?'New Meal':'Edit Meal';
+  document.getElementById('meDelBtn').style.display=isNew?'none':'block';
+  var meal=isNew?{nm:'',tm:'',kc:'',foods:[]}:plan.items[idx];
+  document.getElementById('meNm').value=meal.nm||'';
+  document.getElementById('meTm').value=meal.tm||'';
+  document.getElementById('meKc').value=meal.kc||'';
+  document.getElementById('meMKcal').value='';
+  document.getElementById('meMPro').value='';
+  document.getElementById('meMCarb').value='';
+  renderMealFoods((meal.foods||[]).slice());
+  document.getElementById('mealEditOv').style.display='flex';
+  setTimeout(function(){document.getElementById('meNm').focus();},60);
+}
+function closeMealEdit(){document.getElementById('mealEditOv').style.display='none';}
+function renderMealFoods(foods){
+  document.getElementById('meFoods').innerHTML=foods.map(function(f,i){
+    return '<div class="me-food-row">'
+      +'<div style="flex:1;display:flex;flex-direction:column;gap:5px">'
+      +'<input class="me-fi" placeholder="Food name" value="'+esc(f.f||'')+'" id="mff'+i+'">'
+      +'<div style="display:flex;gap:5px">'
+      +'<input class="me-fi" placeholder="Macros e.g. 12g protein" value="'+esc(f.p||'')+'" id="mfp'+i+'">'
+      +'<input class="me-fi" placeholder="Note (optional)" value="'+esc(f.c||'')+'" id="mfc'+i+'">'
+      +'</div></div>'
+      +'<button class="me-del-f" onclick="removeMealFood('+i+')">&#128465;</button>'
+      +'</div>';
+  }).join('');
+  document.getElementById('meFoods')._cnt=foods.length;
+}
+function addMealFood(){renderMealFoods(collectFoods().concat([{f:'',p:'',c:''}]));}
+function removeMealFood(i){var f=collectFoods();f.splice(i,1);renderMealFoods(f);}
+function collectFoods(){
+  var n=document.getElementById('meFoods')._cnt||0,foods=[];
+  for(var i=0;i<n;i++){
+    foods.push({
+      f:(document.getElementById('mff'+i)||{value:''}).value.trim(),
+      p:(document.getElementById('mfp'+i)||{value:''}).value.trim(),
+      c:(document.getElementById('mfc'+i)||{value:''}).value.trim()
+    });
+  }
+  return foods;
+}
+function saveMealEdit(){
+  var nm=document.getElementById('meNm').value.trim();
+  if(!nm){document.getElementById('meNm').focus();return;}
+  var base=CUSTOM_MEALS[mealType]||JSON.parse(JSON.stringify(MEALS[mealType]));
+  if(!CUSTOM_MEALS[mealType])CUSTOM_MEALS[mealType]=base;
+  var meal={nm:nm,tm:document.getElementById('meTm').value.trim(),kc:document.getElementById('meKc').value.trim(),foods:collectFoods().filter(function(f){return f.f;})};
+  if(editingMealIdx===-1){CUSTOM_MEALS[mealType].items.push(meal);}
+  else{CUSTOM_MEALS[mealType].items[editingMealIdx]=meal;}
+  var mKcal=document.getElementById('meMKcal').value.trim();
+  var mPro=document.getElementById('meMPro').value.trim();
+  var mCarb=document.getElementById('meMCarb').value.trim();
+  if(mKcal||mPro||mCarb){
+    var mac=CUSTOM_MEALS[mealType].macros||{};
+    if(mKcal)mac.kcal=mKcal;if(mPro)mac.pro=mPro;if(mCarb)mac.carb=mCarb;
+    CUSTOM_MEALS[mealType].macros=mac;
+  }
+  saveCustomMeals();closeMealEdit();renderMeal();
+}
+function deleteMealItem(){
+  if(editingMealIdx===-1)return;
+  var base=CUSTOM_MEALS[mealType]||JSON.parse(JSON.stringify(MEALS[mealType]));
+  if(!CUSTOM_MEALS[mealType])CUSTOM_MEALS[mealType]=base;
+  CUSTOM_MEALS[mealType].items.splice(editingMealIdx,1);
+  saveCustomMeals();closeMealEdit();renderMeal();
+}
+function resetMealPlan(){
+  if(!confirm('Reset to default meal plan?'))return;
+  delete CUSTOM_MEALS[mealType];saveCustomMeals();renderMeal();
+}
+
+// ── Meal render ────────────────────────────────────────────────────────────────
+function renderMeal(){
+  var plan=getActiveMealPlan();
+  var isCustom=!!CUSTOM_MEALS[mealType];
+  var h='<div class="meal-toggle"><button class="mtog'+(mealType==='workout'?' on':'')+'" onclick="setMT(\'workout\')">&#127947; Workout day</button><button class="mtog'+(mealType==='rest'?' on':'')+'" onclick="setMT(\'rest\')">&#128564; Rest day</button></div>';
+  h+='<div style="font-size:12px;color:var(--t3);margin-bottom:12px">'+esc(plan.note||plan.label||'')+'</div>';
+  h+='<div class="macros"><div class="mbox"><div class="mv">'+esc(plan.macros.kcal)+'</div><div class="ml">kcal/day</div></div><div class="mbox"><div class="mv">'+esc(plan.macros.pro)+'</div><div class="ml">protein</div></div><div class="mbox"><div class="mv">'+esc(plan.macros.carb)+'</div><div class="ml">carbs</div></div></div>';
+  h+='<div class="water-box"><div class="wlbl">Water &mdash; 3.5L target (14 glasses)</div><div class="glasses">';
+  for(var i=0;i<14;i++){h+='<button class="glbtn'+(i<WG?' on':'')+'" onclick="toggleGlass('+i+')">&#128167;</button>';}
   h+='</div><div class="wcnt" id="wCnt">'+WG+' / 14 glasses</div></div>';
-  h+='<div class="tip"><b>Hisar summer tip:</b> Drink 500ml before each meal. Finish your gym bottle before leaving.</div>';
+  h+='<div class="notif-row"><div class="notif-lbl"><div class="notif-lbl-top">&#127859; Meal Reminders</div><div class="notif-lbl-sub">Notify me at each meal time</div></div><button class="ntog'+(NOTIF_PREFS.m?' on':'')+'" onclick="toggleMealNotif()"></button></div>';
+  h+='<div class="notif-row"><div class="notif-lbl"><div class="notif-lbl-top">&#128167; Water Reminder</div><div class="notif-lbl-sub">Every 2 hours (6 AM – 10 PM)</div></div><button class="ntog'+(NOTIF_PREFS.w?' on':'')+'" onclick="toggleWaterNotif()"></button></div>';
+  h+='<div class="tip"><b>Tip:</b> Keep the app open in the background for reminders to fire on time.</div>';
   plan.items.forEach(function(meal,mi){
     var ck='m_'+mi+'_'+mealType;
     var eaten=MC[ck]||false;
-    h+='<div class="mcard'+(eaten?' eaten':'')+'"><div class="mhdr"><div><div class="mnm">'+meal.nm+'</div><div class="mkcal">'+meal.kc+'</div></div><span class="mtm">'+meal.tm+'</span></div>';
+    h+='<div class="mcard'+(eaten?' eaten':'')+'"><div class="mhdr"><div><div class="mnm">'+esc(meal.nm)+'</div><div class="mkcal">'+esc(meal.kc)+'</div></div><div style="display:flex;align-items:center;gap:6px"><span class="mtm">'+esc(meal.tm)+'</span><button class="m-edit-btn" onclick="openMealEdit('+mi+')">&#9998;</button></div></div>';
     meal.foods.forEach(function(f){
-      h+='<div class="frow"><span class="fn">'+f.f+'</span><span class="fp">'+f.p+'</span></div>';
-      if(f.c)h+='<div class="fnote">'+f.c+'</div>';
+      h+='<div class="frow"><span class="fn">'+esc(f.f)+'</span><span class="fp">'+esc(f.p)+'</span></div>';
+      if(f.c)h+='<div class="fnote">'+esc(f.c)+'</div>';
     });
     h+='<div class="mchkrow"><button class="mchk'+(eaten?' on':'')+'" onclick="toggleMeal(\''+ck+'\')">&#10003;</button><span class="mchklbl">'+(eaten?'Eaten &#10003;':'Mark as eaten')+'</span></div></div>';
   });
+  h+='<button class="meal-add-btn" onclick="openMealEdit(-1)">+ Add Meal</button>';
+  if(isCustom)h+='<button class="meal-reset-lnk" onclick="resetMealPlan()">Reset to defaults</button>';
   document.getElementById('mealArea').innerHTML=h;
 }
 
@@ -1351,8 +1567,9 @@ function deleteUser(){
 function switchToUser(id){
   setActiveUser(id);
   stopSessTimer();sessTimerIid=null;
-  loadState();loadBW();loadPR();
+  loadState();loadBW();loadPR();loadCustomMeals();loadNotifPrefs();
   initMissingKeys();
+  if(NOTIF_PREFS.m||NOTIF_PREFS.w)startNotifChecker();
   closeUserPicker();
   initApp();
 }
@@ -1543,8 +1760,9 @@ if(!USERS.length){
   // Validate active user
   if(!activeUserId||!getActiveUser())activeUserId=USERS[0].id;
   setActiveUser(activeUserId);
-  loadState();loadBW();loadPR();
+  loadState();loadBW();loadPR();loadCustomMeals();loadNotifPrefs();
   initMissingKeys();
+  if(NOTIF_PREFS.m||NOTIF_PREFS.w)startNotifChecker();
   initApp();
 }
 
