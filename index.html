@@ -1907,17 +1907,20 @@ function loadFirebaseSDKs(cb){
   });
 }
 
+function extractBraceBlock(str){
+  var start=str.indexOf('{');if(start===-1)return null;
+  var depth=0;
+  for(var i=start;i<str.length;i++){
+    if(str[i]==='{')depth++;
+    else if(str[i]==='}'){depth--;if(depth===0)return str.slice(start,i+1);}
+  }
+  return null;
+}
 function parseFirebaseCfg(raw){
-  // Strip JS variable declaration and semicolons
-  var s=raw.trim()
-    .replace(/^const\s+\w+\s*=\s*/,'')
-    .replace(/^var\s+\w+\s*=\s*/,'')
-    .replace(/;\s*$/,'')
-    .trim();
-  // Try JSON.parse first (already valid JSON)
-  try{return JSON.parse(s);}catch(e){}
-  // Convert JS object syntax to JSON: quote unquoted keys
-  var json=s.replace(/([{,]\s*)([a-zA-Z_]\w*)\s*:/g,'$1"$2":');
+  var block=extractBraceBlock(raw.trim());
+  if(!block)return null;
+  try{return JSON.parse(block);}catch(e){}
+  var json=block.replace(/([{,]\s*)([a-zA-Z_]\w*)\s*:/g,'$1"$2":');
   try{return JSON.parse(json);}catch(e){}
   return null;
 }
