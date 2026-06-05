@@ -1812,6 +1812,7 @@ function resumeSessTimer(){
   var k=getSessKey();
   if(ST[k]&&!sessTimerIid)sessTimerIid=setInterval(updateSessDisplay,1000);
 }
+function stopSessTimer(){clearInterval(sessTimerIid);sessTimerIid=null;}
 
 // ── Progressive Overload ───────────────────────────────────────────────────────
 function exReadyToProgress(d,s,e){
