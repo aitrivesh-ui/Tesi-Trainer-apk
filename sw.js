@@ -1,6 +1,5 @@
-var CACHE = 'tesi-v2';
-var BASE = '/Tesi-Trainer-apk';
-var SHELL = [BASE+'/', BASE+'/manifest.json', BASE+'/icons/icon-192.png', BASE+'/icons/icon-512.png'];
+var CACHE = 'tesi-v3';
+var SHELL = ['./','.//manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
 
 self.addEventListener('install', function(e){
   e.waitUntil(
@@ -19,7 +18,6 @@ self.addEventListener('activate', function(e){
 });
 
 self.addEventListener('fetch', function(e){
-  // Only handle same-origin GET requests
   if(e.request.method!=='GET' || !e.request.url.startsWith(self.location.origin)) return;
   e.respondWith(
     caches.match(e.request).then(function(cached){
@@ -30,7 +28,6 @@ self.addEventListener('fetch', function(e){
         }
         return res;
       }).catch(function(){ return cached; });
-      // Cache-first for shell, network-first for everything else
       return cached || network;
     })
   );
