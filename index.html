@@ -247,6 +247,29 @@ html,body{width:100%;overflow-x:hidden;background:#0a0a0f;font-family:'Inter',sa
 .day-notes-lbl{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
 .day-notes-ta{width:100%;background:var(--bg3);border:1px solid var(--bdr2);border-radius:10px;padding:10px 12px;color:var(--t2);font-size:13px;font-family:'Inter',sans-serif;resize:none;outline:none;min-height:58px;line-height:1.5}
 .day-notes-ta:focus{border-color:var(--accent);color:var(--t1)}
+/* ── Sync modal ── */
+.sync-ov{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:360;display:flex;align-items:center;justify-content:center;padding:20px}
+.sync-card{background:var(--bg2);border:1px solid var(--bdr2);border-radius:16px;padding:22px;width:100%;max-width:390px;max-height:90vh;overflow-y:auto}
+.sync-head{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--t1);display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.sync-tabs{display:flex;gap:6px;margin-bottom:16px}
+.sync-tab{flex:1;padding:10px;border:1px solid var(--bdr2);border-radius:8px;background:var(--bg3);color:var(--t2);cursor:pointer;font-size:13px;font-family:'Inter',sans-serif;text-align:center}
+.sync-tab.on{background:var(--adim);border-color:var(--accent);color:var(--accent)}
+.sync-btn{width:100%;padding:13px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px}
+.sync-btn-ex{background:var(--adim);border:1px solid rgba(0,229,160,.3);color:var(--accent)}
+.sync-btn-im{background:var(--sdim);border:1px solid rgba(77,166,255,.3);color:var(--str)}
+.sync-btn-fb{background:linear-gradient(135deg,#1a2a1a,#1a1a2a);border:1px solid rgba(255,179,71,.3);color:var(--pmp)}
+.sync-btn-fb.connected{background:var(--adim);border-color:var(--accent);color:var(--accent)}
+.sync-note{font-size:12px;color:var(--t3);line-height:1.6;margin-bottom:14px}
+.sync-note b{color:var(--t2)}
+.sync-sep{height:1px;background:var(--bdr);margin:14px 0}
+.sync-inp{width:100%;background:var(--bg4);border:1px solid var(--bdr2);border-radius:8px;padding:10px 12px;color:var(--t1);font-size:13px;font-family:'Courier New',monospace;outline:none;margin-bottom:8px;display:block}
+.sync-inp:focus{border-color:var(--accent)}
+.sync-status{font-size:12px;padding:8px 12px;border-radius:8px;margin-bottom:8px;display:none}
+.sync-status.ok{background:var(--adim);color:var(--accent);display:block}
+.sync-status.err{background:var(--rdim);color:var(--red);display:block}
+.sync-lbl{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.sync-icon-btn{font-size:14px;background:none;border:none;color:var(--t3);cursor:pointer;padding:4px 8px;border-radius:6px;vertical-align:middle}
+.sync-icon-btn:hover{color:var(--accent)}
 /* ── Meal edit modal ── */
 .meal-edit-ov{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:350;display:flex;align-items:flex-end;justify-content:center}
 .meal-edit-sh{background:var(--bg2);border-radius:20px 20px 0 0;border:1px solid var(--bdr2);width:100%;max-width:600px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
@@ -313,7 +336,10 @@ html,body{width:100%;overflow-x:hidden;background:#0a0a0f;font-family:'Inter',sa
 <div class="hdr">
   <div class="hdr-top">
     <div class="logo">TESI <span>TRAINER</span></div>
-    <div id="profileTop" style="font-size:11px;color:var(--t3);text-align:right;line-height:1.6;cursor:pointer" onclick="openUserPicker()">--</div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="sync-icon-btn" onclick="openSync()" title="Sync / Backup">&#9729;</button>
+      <div id="profileTop" style="font-size:11px;color:var(--t3);text-align:right;line-height:1.6;cursor:pointer" onclick="openUserPicker()">--</div>
+    </div>
   </div>
   <div id="profileSub" style="display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap"></div>
   <div class="week-row">
@@ -395,6 +421,47 @@ html,body{width:100%;overflow-x:hidden;background:#0a0a0f;font-family:'Inter',sa
     <div class="share-footer">
       <button class="share-copy" id="shareCopyBtn" onclick="copyShareText()">&#128203; Copy to Clipboard</button>
       <button class="share-native" id="shareNativeBtn" onclick="nativeShare()">&#8679; Share</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden file input for import -->
+<input type="file" id="importFileIn" accept=".json" style="display:none" onchange="handleImportFile(this)">
+
+<!-- Sync / Backup Modal -->
+<div class="sync-ov" id="syncOv" style="display:none" onclick="if(event.target===this)closeSync()">
+  <div class="sync-card">
+    <div class="sync-head">&#9729; Sync &amp; Backup <button class="share-close" onclick="closeSync()">&#10005;</button></div>
+    <div class="sync-tabs">
+      <button class="sync-tab on" id="stb-backup" onclick="switchSyncTab('backup')">&#128190; Backup</button>
+      <button class="sync-tab" id="stb-cloud" onclick="switchSyncTab('cloud')">&#9729; Cloud</button>
+    </div>
+
+    <!-- Backup tab -->
+    <div id="syncBackupPane">
+      <p class="sync-note">Back up <b>all users &amp; all workout data</b> to a JSON file. Transfer via WhatsApp, email, or Google Drive to restore on any device.</p>
+      <button class="sync-btn sync-btn-ex" onclick="exportData()">&#11015; Export All Data</button>
+      <button class="sync-btn sync-btn-im" onclick="document.getElementById('importFileIn').click()">&#11014; Import Data</button>
+      <div class="sync-status" id="backupStatus"></div>
+      <div class="sync-sep"></div>
+      <p class="sync-note" style="margin:0"><b>Workflow:</b> Export on your phone → share JSON to PC via WhatsApp/Drive → open the app on PC → Import. Data replaces everything on the target device.</p>
+    </div>
+
+    <!-- Cloud sync tab -->
+    <div id="syncCloudPane" style="display:none">
+      <div class="sync-status" id="cloudStatus"></div>
+      <p class="sync-note"><b>Auto-sync via Firebase.</b> Free setup — takes 5 min. Data stays private in your own project.</p>
+      <div class="sync-lbl">Firebase Config (paste JSON)</div>
+      <textarea class="sync-inp" id="fbConfigInp" rows="5" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}'></textarea>
+      <button class="sync-btn sync-btn-fb" id="fbConnectBtn" onclick="connectFirebase()">Connect Firebase</button>
+      <div id="fbSignedInPane" style="display:none">
+        <div style="font-size:13px;color:var(--t2);margin-bottom:10px" id="fbUserLbl"></div>
+        <button class="sync-btn sync-btn-ex" onclick="fbPush()">&#11015; Push to Cloud</button>
+        <button class="sync-btn sync-btn-im" onclick="fbPull()">&#11014; Pull from Cloud</button>
+        <button class="sync-btn" style="background:var(--rdim);border:1px solid rgba(255,77,109,.3);color:var(--red)" onclick="fbSignOut()">Sign Out</button>
+      </div>
+      <div class="sync-sep"></div>
+      <p class="sync-note"><b>Setup:</b> 1) Go to <b>console.firebase.google.com</b> → Create project → Add web app → copy config above. 2) Enable <b>Firestore Database</b> (start in test mode). 3) Enable <b>Authentication → Google Sign-In</b>. 4) Paste config and click Connect.</p>
     </div>
   </div>
 </div>
@@ -1749,6 +1816,185 @@ function exReadyToProgress(d,s,e){
   });
   return hasWorking&&allHit;
 }
+
+// ── Sync / Backup ──────────────────────────────────────────────────────────────
+var syncTabMode='backup';
+function openSync(){renderSyncCloud();document.getElementById('syncOv').style.display='flex';}
+function closeSync(){document.getElementById('syncOv').style.display='none';}
+function switchSyncTab(t){
+  syncTabMode=t;
+  document.getElementById('stb-backup').classList.toggle('on',t==='backup');
+  document.getElementById('stb-cloud').classList.toggle('on',t==='cloud');
+  document.getElementById('syncBackupPane').style.display=t==='backup'?'':'none';
+  document.getElementById('syncCloudPane').style.display=t==='cloud'?'':'none';
+}
+
+function getAllTesiData(){
+  var d={};
+  Object.keys(localStorage).filter(function(k){return k.startsWith('tt_');}).forEach(function(k){d[k]=localStorage.getItem(k);});
+  return d;
+}
+function restoreAllTesiData(d){
+  Object.keys(d).forEach(function(k){if(k.startsWith('tt_'))localStorage.setItem(k,d[k]);});
+}
+
+function exportData(){
+  var payload=JSON.stringify({v:1,ts:Date.now(),data:getAllTesiData()},null,2);
+  var blob=new Blob([payload],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  var d=new Date().toISOString().slice(0,10);
+  a.href=url;a.download='tesi-backup-'+d+'.json';
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},200);
+  setSyncStatus('backupStatus','Exported! Share this file to sync to another device.','ok');
+}
+function handleImportFile(inp){
+  var file=inp.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var obj=JSON.parse(e.target.result);
+      var d=obj.data||obj;
+      if(typeof d!=='object')throw new Error('bad format');
+      restoreAllTesiData(d);
+      setSyncStatus('backupStatus','Imported! Reloading...','ok');
+      setTimeout(function(){location.reload();},1000);
+    }catch(ex){setSyncStatus('backupStatus','Error: invalid file.','err');}
+  };
+  reader.readAsText(file);
+  inp.value='';
+}
+function setSyncStatus(id,msg,type){
+  var el=document.getElementById(id);if(!el)return;
+  el.textContent=msg;el.className='sync-status '+type;
+}
+
+// ── Firebase Sync ──────────────────────────────────────────────────────────────
+var fbApp=null,fbDb=null,fbAuth=null,fbUser=null;
+var FB_CFG_KEY='tt_fbcfg';
+
+function loadFbConfig(){try{return JSON.parse(localStorage.getItem(FB_CFG_KEY)||'null');}catch(e){return null;}}
+function saveFbConfig(cfg){try{localStorage.setItem(FB_CFG_KEY,JSON.stringify(cfg));}catch(e){}}
+
+function renderSyncCloud(){
+  var cfg=loadFbConfig();
+  if(cfg)document.getElementById('fbConfigInp').value=JSON.stringify(cfg);
+  if(fbUser){
+    document.getElementById('fbSignedInPane').style.display='';
+    document.getElementById('fbConnectBtn').style.display='none';
+    document.getElementById('fbUserLbl').textContent='Signed in as '+fbUser.email;
+    document.getElementById('fbConnectBtn').classList.add('connected');
+  }
+}
+
+function loadFirebaseSDKs(cb){
+  if(window.firebase&&window.firebase.firestore){cb();return;}
+  var scripts=[
+    'https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js',
+    'https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js',
+    'https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js'
+  ];
+  var loaded=0;
+  scripts.forEach(function(src){
+    var s=document.createElement('script');
+    s.src=src;
+    s.onload=function(){if(++loaded===scripts.length)cb();};
+    s.onerror=function(){setSyncStatus('cloudStatus','Failed to load Firebase SDK. Check internet.','err');};
+    document.head.appendChild(s);
+  });
+}
+
+function connectFirebase(){
+  var inp=document.getElementById('fbConfigInp').value.trim();
+  if(!inp){setSyncStatus('cloudStatus','Paste your Firebase config JSON first.','err');return;}
+  var cfg;
+  try{cfg=JSON.parse(inp);}catch(e){setSyncStatus('cloudStatus','Invalid JSON. Check your config.','err');return;}
+  setSyncStatus('cloudStatus','Loading Firebase SDK...','ok');
+  loadFirebaseSDKs(function(){
+    try{
+      if(fbApp)fbApp.delete();
+      fbApp=window.firebase.initializeApp(cfg,'tesi-sync');
+      fbDb=window.firebase.firestore(fbApp);
+      fbAuth=window.firebase.auth(fbApp);
+      saveFbConfig(cfg);
+      setSyncStatus('cloudStatus','Signing in with Google...','ok');
+      var provider=new window.firebase.auth.GoogleAuthProvider();
+      fbAuth.signInWithPopup(provider).then(function(result){
+        fbUser=result.user;
+        setSyncStatus('cloudStatus','Signed in as '+fbUser.email,'ok');
+        document.getElementById('fbSignedInPane').style.display='';
+        document.getElementById('fbConnectBtn').style.display='none';
+        document.getElementById('fbUserLbl').textContent='Signed in as '+fbUser.email;
+      }).catch(function(err){setSyncStatus('cloudStatus','Sign-in error: '+err.message,'err');});
+    }catch(ex){setSyncStatus('cloudStatus','Firebase error: '+ex.message,'err');}
+  });
+}
+
+function fbPush(){
+  if(!fbDb||!fbUser){setSyncStatus('cloudStatus','Not connected.','err');return;}
+  setSyncStatus('cloudStatus','Pushing data...','ok');
+  var payload=getAllTesiData();
+  payload._ts=Date.now();
+  // Split into chunks if needed (Firestore 1MB limit per doc)
+  var chunks={};var cur={};var curSize=0;var ci=0;
+  Object.keys(payload).forEach(function(k){
+    var v=payload[k];var sz=(v||'').length;
+    if(curSize+sz>800000){chunks['chunk'+ci]=cur;ci++;cur={};curSize=0;}
+    cur[k]=v;curSize+=sz;
+  });
+  chunks['chunk'+ci]=cur;
+  var ref=fbDb.collection('tesi').doc(fbUser.uid);
+  var promises=Object.keys(chunks).map(function(c){return ref.collection('data').doc(c).set(chunks[c]);});
+  // Store chunk count
+  promises.push(ref.set({chunks:Object.keys(chunks).length,ts:Date.now()},{merge:true}));
+  Promise.all(promises).then(function(){setSyncStatus('cloudStatus','Pushed! Data is live on all devices.','ok');}).catch(function(e){setSyncStatus('cloudStatus','Push error: '+e.message,'err');});
+}
+
+function fbPull(){
+  if(!fbDb||!fbUser){setSyncStatus('cloudStatus','Not connected.','err');return;}
+  setSyncStatus('cloudStatus','Pulling data...','ok');
+  var ref=fbDb.collection('tesi').doc(fbUser.uid);
+  ref.get().then(function(snap){
+    if(!snap.exists){setSyncStatus('cloudStatus','No cloud data found. Push from another device first.','err');return;}
+    var meta=snap.data();
+    var n=meta.chunks||1;
+    var promises=[];
+    for(var i=0;i<n;i++)promises.push(ref.collection('data').doc('chunk'+i).get());
+    Promise.all(promises).then(function(snaps){
+      var merged={};
+      snaps.forEach(function(s){if(s.exists)Object.assign(merged,s.data());});
+      delete merged._ts;
+      restoreAllTesiData(merged);
+      setSyncStatus('cloudStatus','Pulled! Reloading...','ok');
+      setTimeout(function(){location.reload();},1000);
+    });
+  }).catch(function(e){setSyncStatus('cloudStatus','Pull error: '+e.message,'err');});
+}
+
+function fbSignOut(){
+  if(fbAuth)fbAuth.signOut();
+  fbUser=null;
+  document.getElementById('fbSignedInPane').style.display='none';
+  document.getElementById('fbConnectBtn').style.display='';
+  document.getElementById('fbConnectBtn').classList.remove('connected');
+  setSyncStatus('cloudStatus','Signed out.','ok');
+}
+
+// Auto-reconnect Firebase on load if config saved
+(function(){
+  var cfg=loadFbConfig();
+  if(!cfg)return;
+  loadFirebaseSDKs(function(){
+    try{
+      if(fbApp)return;
+      fbApp=window.firebase.initializeApp(cfg,'tesi-sync');
+      fbDb=window.firebase.firestore(fbApp);
+      fbAuth=window.firebase.auth(fbApp);
+      fbAuth.onAuthStateChanged(function(u){if(u){fbUser=u;}});
+    }catch(e){}
+  });
+})();
 
 // ── Boot ───────────────────────────────────────────────────────────────────────
 loadUsers();
