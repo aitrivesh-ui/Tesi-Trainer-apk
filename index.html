@@ -300,6 +300,37 @@ html,body{width:100%;overflow-x:hidden;background:#0a0a0f;font-family:'Inter',sa
 .m-edit-btn{font-size:10px;color:var(--t3);background:var(--bg3);border:1px solid var(--bdr2);border-radius:5px;padding:3px 7px;cursor:pointer;flex-shrink:0}
 .meal-add-btn{font-size:13px;color:var(--accent);background:var(--adim);border:1px solid rgba(0,229,160,.25);border-radius:10px;padding:12px;cursor:pointer;width:100%;margin-bottom:10px;text-align:center;font-family:'Inter',sans-serif}
 .meal-reset-lnk{font-size:11px;color:var(--t3);cursor:pointer;text-decoration:underline;display:block;text-align:center;margin-bottom:14px;background:none;border:none;font-family:'Inter',sans-serif}
+/* ── AI Coach modal ── */
+.ai-ov{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:400;display:flex;align-items:flex-end;justify-content:center}
+.ai-sheet{background:var(--bg2);border-radius:20px 20px 0 0;border:1px solid var(--bdr2);width:100%;max-width:600px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden}
+.ai-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid var(--bdr);flex-shrink:0;background:linear-gradient(135deg,rgba(255,179,71,.08),rgba(0,229,160,.08))}
+.ai-title{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--pmp);letter-spacing:.5px}
+.ai-body{flex:1;overflow-y:auto;padding:16px 18px}
+.ai-foot{padding:12px 18px 28px;border-top:1px solid var(--bdr);display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+.ai-key-row{display:flex;gap:8px;align-items:center}
+.ai-key-inp{flex:1;background:var(--bg4);border:1px solid var(--bdr2);border-radius:8px;padding:10px 12px;color:var(--t1);font-size:13px;font-family:'Courier New',monospace;outline:none}
+.ai-key-inp:focus{border-color:var(--pmp)}
+.ai-key-save{padding:10px 14px;background:var(--bg3);border:1px solid var(--bdr2);border-radius:8px;color:var(--t2);font-size:12px;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif}
+.ai-gen-btn{padding:14px;background:linear-gradient(135deg,#1a1506,#0a1a10);border:1px solid rgba(255,179,71,.4);border-radius:12px;color:var(--pmp);font-size:15px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;touch-action:manipulation}
+.ai-gen-btn:active{opacity:.8}
+.ai-gen-btn:disabled{opacity:.45;cursor:not-allowed}
+.ai-note{font-size:11px;color:var(--t3);line-height:1.6;margin-bottom:12px}
+.ai-note b{color:var(--t2)}
+.ai-section{margin-bottom:18px}
+.ai-sec-title{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--bdr)}
+.ai-content{font-size:13px;color:var(--t2);line-height:1.7;white-space:pre-wrap;word-break:break-word}
+.ai-loading{text-align:center;padding:40px 20px}
+.ai-spin{display:inline-block;width:32px;height:32px;border:3px solid var(--bdr2);border-top-color:var(--pmp);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ai-loading-txt{font-size:14px;color:var(--t3)}
+.ai-empty{text-align:center;padding:30px 16px;color:var(--t3);font-size:13px;line-height:1.6}
+.ai-empty-icon{font-size:40px;display:block;margin-bottom:10px}
+.ai-data-sum{background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:var(--t3);line-height:1.7}
+.ai-data-sum b{color:var(--t2)}
+.ai-tab-row{display:flex;gap:6px;margin-bottom:14px}
+.ai-tab{flex:1;padding:8px 4px;font-size:12px;font-weight:500;background:var(--bg3);border:1px solid var(--bdr2);border-radius:8px;color:var(--t3);cursor:pointer;font-family:'Inter',sans-serif;touch-action:manipulation}
+.ai-tab.on{background:var(--pdim);border-color:rgba(255,179,71,.4);color:var(--pmp)}
+.ai-error{background:var(--rdim);border:1px solid rgba(255,77,109,.3);border-radius:8px;padding:12px 14px;color:var(--red);font-size:13px;line-height:1.5;margin-bottom:12px}
 </style>
 </head>
 <body>
@@ -355,6 +386,7 @@ html,body{width:100%;overflow-x:hidden;background:#0a0a0f;font-family:'Inter',sa
 <div class="nav">
   <button class="nb on" onclick="switchTab('workout',this)" id="nb-w">&#127947; Workout</button>
   <button class="nb" onclick="switchTab('meal',this)" id="nb-m">&#127825; Meal</button>
+  <button class="nb" onclick="openAICoach()" id="nb-ai">&#129302; AI</button>
   <button class="nb" onclick="openUserPicker()" id="nb-p">&#128100; Profile</button>
 </div>
 
@@ -424,6 +456,31 @@ html,body{width:100%;overflow-x:hidden;background:#0a0a0f;font-family:'Inter',sa
     <div class="share-footer">
       <button class="share-copy" id="shareCopyBtn" onclick="copyShareText()">&#128203; Copy to Clipboard</button>
       <button class="share-native" id="shareNativeBtn" onclick="nativeShare()">&#8679; Share</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI Coach Modal -->
+<div class="ai-ov" id="aiOv" style="display:none" onclick="if(event.target===this)closeAICoach()">
+  <div class="ai-sheet">
+    <div class="ai-head">
+      <span class="ai-title">&#129302; AI Coach</span>
+      <button class="share-close" onclick="closeAICoach()">&#10005;</button>
+    </div>
+    <div class="ai-body" id="aiBody">
+      <div class="ai-empty"><span class="ai-empty-icon">&#129302;</span>Your personal AI coach analyses your workout history, PRs, body weight trend, and meal plan to give you tailored recommendations.<br><br>Enter your Anthropic API key below and tap <b>Generate Report</b>.</div>
+    </div>
+    <div class="ai-foot">
+      <div class="ai-tab-row">
+        <button class="ai-tab on" id="aitab-full" onclick="setAITab('full',this)">&#128209; Full Report</button>
+        <button class="ai-tab" id="aitab-train" onclick="setAITab('train',this)">&#127947; Training</button>
+        <button class="ai-tab" id="aitab-diet" onclick="setAITab('diet',this)">&#127825; Diet</button>
+      </div>
+      <div class="ai-key-row">
+        <input class="ai-key-inp" type="password" id="aiKeyInp" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false">
+        <button class="ai-key-save" onclick="saveAIKey()">Save Key</button>
+      </div>
+      <button class="ai-gen-btn" id="aiGenBtn" onclick="generateAIReport()">&#9889; Generate Report</button>
     </div>
   </div>
 </div>
@@ -2088,6 +2145,279 @@ function showSyncDot(state){
     }catch(e){}
   });
 })();
+
+// ── AI Coach ────────────────────────────────────────────────────────────────────
+var aiCurrentTab='full';
+
+function openAICoach(){
+  var ov=document.getElementById('aiOv');
+  if(!ov)return;
+  ov.style.display='flex';
+  var saved=localStorage.getItem('tt_ai_key')||'';
+  var inp=document.getElementById('aiKeyInp');
+  if(inp&&saved)inp.value=saved;
+}
+function closeAICoach(){
+  var ov=document.getElementById('aiOv');
+  if(ov)ov.style.display='none';
+}
+function saveAIKey(){
+  var v=(document.getElementById('aiKeyInp').value||'').trim();
+  if(!v){alert('Please enter your Anthropic API key.');return;}
+  localStorage.setItem('tt_ai_key',v);
+  var btn=document.getElementById('aiKeyInp');
+  if(btn){btn.style.borderColor='var(--accent)';setTimeout(function(){btn.style.borderColor='';},1200);}
+}
+function setAITab(tab,el){
+  aiCurrentTab=tab;
+  ['full','train','diet'].forEach(function(t){
+    var b=document.getElementById('aitab-'+t);
+    if(b)b.classList.toggle('on',t===tab);
+  });
+}
+
+function collectAIData(){
+  var user=getActiveUser()||{};
+  var data={};
+
+  // User profile
+  data.profile={
+    name:user.name||'User',
+    weight:user.weight||'',
+    height:user.height||'',
+    bench1rm:user.bench1rm||'',
+    location:user.location||''
+  };
+
+  // Body weight log (last 30 entries)
+  data.bodyWeight=(BW_LOG||[]).slice(-30).map(function(e){return {date:e.d,kg:e.w};});
+
+  // Personal records
+  data.personalRecords={};
+  if(PR_HIST){
+    Object.keys(PR_HIST).slice(0,20).forEach(function(ex){
+      var pr=PR_HIST[ex];
+      data.personalRecords[ex]={bestWeight:pr.w,bestReps:pr.r,date:pr.d};
+    });
+  }
+
+  // Workout history — current week + last 3 weeks
+  data.workoutHistory=[];
+  var startW=Math.max(1,curWeek-3);
+  for(var w=startW;w<=curWeek;w++){
+    var weekEntry={week:w,days:[]};
+    (DAYS||[]).forEach(function(day,d){
+      if(day.isRest)return;
+      var skipped=ST[sk2(w,d)];
+      var exData=[];
+      (day.sections||[]).forEach(function(sec,s){
+        (sec.exercises||[]).forEach(function(ex,e){
+          var setData=[];
+          (ex.sets||[]).forEach(function(set,si){
+            var wv=ST[sk(w,d,s,e,si,'w')];
+            var rv=ST[sk(w,d,s,e,si,'r')];
+            if(wv||rv)setData.push({type:set.t,weight:wv,reps:rv});
+          });
+          if(setData.length)exData.push({name:ex.name,sets:setData});
+        });
+      });
+      if(exData.length||skipped){
+        weekEntry.days.push({day:day.label,focus:day.focus,skipped:!!skipped,exercises:exData});
+      }
+    });
+    if(weekEntry.days.length)data.workoutHistory.push(weekEntry);
+  }
+
+  // Meal plan summary
+  var mp=getActiveMealPlan();
+  data.mealPlan={
+    type:mealType,
+    totalKcal:(mp.macros&&mp.macros.kcal)||'',
+    protein:(mp.macros&&mp.macros.pro)||'',
+    meals:(mp.items||[]).slice(0,6).map(function(m){return {name:m.nm,time:m.tm,kcal:m.kc};})
+  };
+
+  // Current week stats
+  var doneCount=0,skipCount=0,totalTrainingDays=0;
+  (DAYS||[]).forEach(function(day,d){
+    if(day.isRest)return;
+    totalTrainingDays++;
+    if(ST[sk2(curWeek,d)])skipCount++;
+    else{
+      var allDone=true;
+      (day.sections||[]).forEach(function(sec,s){
+        (sec.exercises||[]).forEach(function(_,e){if(!ST[dk(curWeek,d,s,e)])allDone=false;});
+      });
+      if(allDone)doneCount++;
+    }
+  });
+  data.currentWeekStats={week:curWeek,daysCompleted:doneCount,daysSkipped:skipCount,totalTrainingDays:totalTrainingDays};
+
+  return data;
+}
+
+function buildAIPrompt(data,tab){
+  var lines=[];
+  lines.push('You are an expert personal trainer and sports nutritionist. Analyse the following user data and provide personalised recommendations.');
+  lines.push('');
+  lines.push('## User Profile');
+  lines.push('Name: '+(data.profile.name||'Unknown'));
+  if(data.profile.weight)lines.push('Body weight: '+data.profile.weight+' kg');
+  if(data.profile.height)lines.push('Height: '+data.profile.height+' cm');
+  if(data.profile.bench1rm)lines.push('Bench 1RM: '+data.profile.bench1rm+' kg');
+  if(data.profile.location)lines.push('Location: '+data.profile.location);
+
+  if(data.bodyWeight&&data.bodyWeight.length){
+    lines.push('');
+    lines.push('## Body Weight Log (recent)');
+    var bw=data.bodyWeight.slice(-10);
+    bw.forEach(function(e){lines.push('  '+e.date+': '+e.kg+' kg');});
+    if(bw.length>=2){
+      var diff=(parseFloat(bw[bw.length-1].kg)-parseFloat(bw[0].kg)).toFixed(1);
+      lines.push('Trend: '+(diff>0?'+':'')+diff+' kg over '+bw.length+' entries');
+    }
+  }
+
+  if(Object.keys(data.personalRecords||{}).length){
+    lines.push('');
+    lines.push('## Personal Records');
+    Object.keys(data.personalRecords).forEach(function(ex){
+      var pr=data.personalRecords[ex];
+      lines.push('  '+ex+': '+pr.bestWeight+'kg × '+pr.bestReps+' reps');
+    });
+  }
+
+  if(data.workoutHistory&&data.workoutHistory.length){
+    lines.push('');
+    lines.push('## Workout History (last '+data.workoutHistory.length+' weeks)');
+    data.workoutHistory.forEach(function(wk){
+      lines.push('Week '+wk.week+':');
+      wk.days.forEach(function(d){
+        if(d.skipped){lines.push('  '+d.day+' ('+d.focus+'): SKIPPED');return;}
+        d.exercises.forEach(function(ex){
+          var setStr=ex.sets.map(function(s){return (s.weight||'?')+'kg×'+(s.reps||'?');}).join(', ');
+          lines.push('  '+d.day+' - '+ex.name+': '+setStr);
+        });
+      });
+    });
+  }
+
+  lines.push('');
+  lines.push('## Current Week Stats (Week '+data.currentWeekStats.week+')');
+  lines.push('Completed: '+data.currentWeekStats.daysCompleted+'/'+data.currentWeekStats.totalTrainingDays+' days, Skipped: '+data.currentWeekStats.daysSkipped);
+
+  lines.push('');
+  lines.push('## Current Meal Plan ('+data.mealPlan.type+' phase)');
+  lines.push('Target: '+(data.mealPlan.totalKcal||'?')+' kcal | Protein: '+(data.mealPlan.protein||'?'));
+  (data.mealPlan.meals||[]).forEach(function(m){lines.push('  '+m.name+' ('+m.time+'): '+m.kcal);});
+
+  lines.push('');
+  if(tab==='train'){
+    lines.push('## Task');
+    lines.push('Based on the workout history and PRs above, provide a TRAINING PLAN recommendation:');
+    lines.push('1. Assess progress and identify weak points or imbalances');
+    lines.push('2. Suggest specific weight/rep adjustments for key exercises next week');
+    lines.push('3. Recommend any exercise swaps or technique cues');
+    lines.push('4. Give a motivational insight based on the data');
+    lines.push('Keep the response practical, specific, and under 400 words.');
+  } else if(tab==='diet'){
+    lines.push('## Task');
+    lines.push('Based on the body weight trend and meal plan above, provide a DIET recommendation:');
+    lines.push('1. Assess calorie and protein targets vs. goal');
+    lines.push('2. Suggest specific meal timing or macro adjustments');
+    lines.push('3. Recommend foods that support muscle gain or fat loss based on the goal');
+    lines.push('4. Flag any nutritional gaps or improvements');
+    lines.push('Keep the response practical, specific, and under 400 words.');
+  } else {
+    lines.push('## Task');
+    lines.push('Provide a FULL COACHING REPORT with two clearly labelled sections:');
+    lines.push('### TRAINING PLAN');
+    lines.push('- Assess progress and identify areas to push harder or deload');
+    lines.push('- Suggest specific weight/rep changes for key exercises next week');
+    lines.push('- Note any muscle groups being undertrained or overtrained');
+    lines.push('### DIET PLAN');
+    lines.push('- Assess current calorie and protein intake vs. the goal');
+    lines.push('- Suggest macro adjustments and meal timing tweaks');
+    lines.push('- Recommend 2-3 specific food swaps or additions');
+    lines.push('Keep each section under 250 words. Be direct and data-driven.');
+  }
+
+  return lines.join('\n');
+}
+
+function renderAIDataSummary(data){
+  var wks=data.workoutHistory.length;
+  var totalSessions=0;
+  data.workoutHistory.forEach(function(w){totalSessions+=w.days.filter(function(d){return !d.skipped;}).length;});
+  var prs=Object.keys(data.personalRecords||{}).length;
+  var bwEntries=data.bodyWeight.length;
+  return '<div class="ai-data-sum">'
+    +'<b>Data analysed:</b> '
+    +wks+' weeks of history · '
+    +totalSessions+' sessions · '
+    +prs+' PRs · '
+    +bwEntries+' weight logs'
+    +'</div>';
+}
+
+function generateAIReport(){
+  var key=(localStorage.getItem('tt_ai_key')||'').trim();
+  if(!key){
+    var inp=document.getElementById('aiKeyInp');
+    if(inp)key=(inp.value||'').trim();
+  }
+  if(!key){
+    document.getElementById('aiBody').innerHTML='<div class="ai-error">Please enter your Anthropic API key first.</div>';
+    return;
+  }
+  if(!key.startsWith('sk-')){
+    document.getElementById('aiBody').innerHTML='<div class="ai-error">Invalid API key format. Key should start with "sk-".</div>';
+    return;
+  }
+
+  var btn=document.getElementById('aiGenBtn');
+  if(btn)btn.disabled=true;
+  document.getElementById('aiBody').innerHTML='<div class="ai-loading"><div class="ai-spin"></div><div class="ai-loading-txt">Analysing your data with AI...</div></div>';
+
+  var data=collectAIData();
+  var prompt=buildAIPrompt(data,aiCurrentTab);
+
+  fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key':key,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-allow-browser':'true'
+    },
+    body:JSON.stringify({
+      model:'claude-haiku-4-5-20251001',
+      max_tokens:1024,
+      messages:[{role:'user',content:prompt}]
+    })
+  }).then(function(r){
+    if(!r.ok){
+      return r.json().then(function(e){
+        throw new Error((e&&e.error&&e.error.message)||('HTTP '+r.status));
+      });
+    }
+    return r.json();
+  }).then(function(json){
+    var text=(json.content&&json.content[0]&&json.content[0].text)||'No response.';
+    var summary=renderAIDataSummary(data);
+    var tabLabel=aiCurrentTab==='full'?'Full Report':aiCurrentTab==='train'?'Training Plan':'Diet Plan';
+    document.getElementById('aiBody').innerHTML=
+      summary+
+      '<div class="ai-section">'+
+        '<div class="ai-sec-title">&#129302; '+tabLabel+'</div>'+
+        '<div class="ai-content">'+esc(text)+'</div>'+
+      '</div>';
+    if(btn)btn.disabled=false;
+  }).catch(function(err){
+    document.getElementById('aiBody').innerHTML='<div class="ai-error">&#9888; Error: '+esc(err.message)+'<br><br>Check your API key or internet connection. Make sure the key has access to Claude Haiku.</div>';
+    if(btn)btn.disabled=false;
+  });
+}
 
 // ── Boot ───────────────────────────────────────────────────────────────────────
 loadUsers();
