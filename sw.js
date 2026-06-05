@@ -1,5 +1,5 @@
 var CACHE = 'tesi-v3';
-var SHELL = ['./','.//manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
+var SHELL = ['./','./manifest.json','./icons/icon-192.png','./icons/icon-512.png'];
 
 self.addEventListener('install', function(e){
   e.waitUntil(
