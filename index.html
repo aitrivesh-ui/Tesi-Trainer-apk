@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>TESI Trainer</title>
+<link rel="manifest" href="manifest.json">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -217,6 +218,30 @@ html,body{width:100%;overflow-x:hidden;background:#0a0a0f;font-family:'Inter',sa
 .sess-timer{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--str);line-height:1}
 .orm-chip{font-size:9px;color:var(--str);background:var(--sdim);border-radius:4px;padding:1px 5px;margin-top:2px;display:block;text-align:center;min-height:13px}
 .ol-badge{font-size:10px;color:var(--accent);background:var(--adim);border:1px solid rgba(0,229,160,.3);border-radius:5px;padding:1px 6px;margin-left:5px;vertical-align:middle;display:inline-block}
+/* ── User picker ── */
+.user-pick{position:fixed;inset:0;background:var(--bg);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;overflow-y:auto}
+.up-logo{font-family:'Rajdhani',sans-serif;font-size:30px;font-weight:700;color:var(--accent);letter-spacing:2px;margin-bottom:2px}
+.up-logo span{color:var(--t1)}
+.up-sub{font-size:13px;color:var(--t3);margin-bottom:28px}
+.user-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:420px;margin-bottom:20px}
+.ucard{background:var(--bg2);border:1px solid var(--bdr2);border-radius:14px;padding:18px 12px;cursor:pointer;position:relative;text-align:center;transition:border-color .15s}
+.ucard:active{opacity:.85}
+.ucard-av{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:#000}
+.ucard-nm{font-size:14px;font-weight:600;color:var(--t1);margin-bottom:3px;word-break:break-word}
+.ucard-info{font-size:11px;color:var(--t3);line-height:1.5}
+.ucard-edit{position:absolute;top:8px;right:8px;font-size:11px;color:var(--t3);background:var(--bg3);border:1px solid var(--bdr);border-radius:5px;padding:2px 7px;cursor:pointer}
+.up-new-btn{padding:13px 32px;background:var(--adim);border:1px solid rgba(0,229,160,.3);border-radius:10px;color:var(--accent);font-size:14px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:500}
+/* ── User profile modal ── */
+.upm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:320;display:flex;align-items:center;justify-content:center;padding:20px}
+.upm-card{background:var(--bg2);border:1px solid var(--bdr2);border-radius:16px;padding:22px;width:100%;max-width:370px}
+.upm-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--t1)}
+.upm-inp{width:100%;background:var(--bg4);border:1px solid var(--bdr2);border-radius:8px;padding:11px 12px;color:var(--t1);font-size:15px;font-family:'Inter',sans-serif;outline:none;margin-bottom:10px;display:block}
+.upm-inp:focus{border-color:var(--accent)}
+.upm-row{display:flex;gap:10px}
+.upm-row .upm-field{flex:1}
+.upm-lbl{font-size:11px;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.upm-save{width:100%;padding:13px;background:var(--accent);border:none;border-radius:10px;color:#000;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-top:4px}
+.upm-del{width:100%;padding:10px;background:var(--rdim);border:1px solid rgba(255,77,109,.3);border-radius:10px;color:var(--red);font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;margin-top:8px}
 /* ── Notes ── */
 .day-notes-wrap{margin-bottom:16px}
 .day-notes-lbl{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
@@ -225,18 +250,42 @@ html,body{width:100%;overflow-x:hidden;background:#0a0a0f;font-family:'Inter',sa
 </style>
 </head>
 <body>
+
+<!-- User Picker (shown on first load / switch) -->
+<div class="user-pick" id="userPick" style="display:none">
+  <div class="up-logo">TESI <span>TRAINER</span></div>
+  <div class="up-sub">Who&#8217;s training today?</div>
+  <div class="user-cards" id="userCards"></div>
+  <button class="up-new-btn" onclick="openUPMod(null)">+ New Profile</button>
+</div>
+
+<!-- User Profile Modal -->
+<div class="upm-overlay" id="upmOverlay" style="display:none" onclick="if(event.target===this)closeUPMod()">
+  <div class="upm-card">
+    <div class="upm-head"><span id="upmTitle">New Profile</span><button class="share-close" onclick="closeUPMod()">&#10005;</button></div>
+    <div class="upm-lbl">Name</div>
+    <input class="upm-inp" id="upmName" placeholder="Your name" maxlength="20">
+    <div class="upm-row">
+      <div class="upm-field"><div class="upm-lbl">Weight (kg)</div><input class="upm-inp" id="upmWeight" type="number" placeholder="75" min="30" max="300" inputmode="decimal"></div>
+      <div class="upm-field"><div class="upm-lbl">Height (cm)</div><input class="upm-inp" id="upmHeight" type="number" placeholder="170" min="100" max="250" inputmode="numeric"></div>
+    </div>
+    <div class="upm-row">
+      <div class="upm-field"><div class="upm-lbl">Bench 1RM (kg)</div><input class="upm-inp" id="upmBench" type="number" placeholder="56" min="0" inputmode="decimal"></div>
+      <div class="upm-field"><div class="upm-lbl">City</div><input class="upm-inp" id="upmLoc" placeholder="Hisar, Haryana"></div>
+    </div>
+    <button class="upm-save" onclick="saveUserProfile()">Save Profile</button>
+    <button class="upm-del" id="upmDel" onclick="deleteUser()" style="display:none">Delete Profile</button>
+  </div>
+</div>
+
 <div class="app">
 
 <div class="hdr">
   <div class="hdr-top">
     <div class="logo">TESI <span>TRAINER</span></div>
-    <div style="font-size:11px;color:var(--t3);text-align:right;line-height:1.5">75 kg &middot; 170 cm<br>Hisar, Haryana</div>
+    <div id="profileTop" style="font-size:11px;color:var(--t3);text-align:right;line-height:1.6;cursor:pointer" onclick="openUserPicker()">--</div>
   </div>
-  <div style="display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap">
-    <div class="sub" style="margin:0">Bench 1RM ~56 kg &middot; 6-day split &middot; 6 AM</div>
-    <span class="bw-chip" onclick="openBW()">&#9878; <span id="bwToday">--</span> kg<span class="bw-spark" id="bwSpark"></span></span>
-    <button onclick="openPR()" style="font-size:11px;color:var(--pmp);background:var(--pdim);border:1px solid rgba(255,179,71,.3);border-radius:20px;padding:3px 10px;cursor:pointer">&#127942; PRs</button>
-  </div>
+  <div id="profileSub" style="display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap"></div>
   <div class="week-row">
     <button class="wn-btn" onclick="changeWeek(-1)">&#8249;</button>
     <span class="wn-lbl" id="weekLabel">Week 1</span>
@@ -509,17 +558,17 @@ var DAYS, ST, MC, WG, curDay, curWeek, curTab, mealType, editingEx;
 
 function loadState(){
   try{
-    var savedDays=localStorage.getItem('tt_days');
+    var savedDays=localStorage.getItem(uPfx('days'));
     DAYS=savedDays?JSON.parse(savedDays):JSON.parse(JSON.stringify(DEFAULT_DAYS));
-    var savedST=localStorage.getItem('tt_st');
+    var savedST=localStorage.getItem(uPfx('st'));
     ST=savedST?JSON.parse(savedST):{};
-    var savedMC=localStorage.getItem('tt_mc');
+    var savedMC=localStorage.getItem(uPfx('mc'));
     MC=savedMC?JSON.parse(savedMC):{};
-    WG=parseInt(localStorage.getItem('tt_wg'))||0;
-    curDay=parseInt(localStorage.getItem('tt_curday'))||0;
-    curWeek=parseInt(localStorage.getItem('tt_curweek'))||1;
-    curTab=localStorage.getItem('tt_curtab')||'workout';
-    mealType=localStorage.getItem('tt_mealtype')||'workout';
+    WG=parseInt(localStorage.getItem(uPfx('wg')))||0;
+    curDay=parseInt(localStorage.getItem(uPfx('curday')))||0;
+    curWeek=parseInt(localStorage.getItem(uPfx('curweek')))||1;
+    curTab=localStorage.getItem(uPfx('curtab'))||'workout';
+    mealType=localStorage.getItem(uPfx('mealtype'))||'workout';
   }catch(e){
     DAYS=JSON.parse(JSON.stringify(DEFAULT_DAYS));
     ST={};MC={};WG=0;curDay=0;curWeek=1;curTab='workout';mealType='workout';
@@ -529,14 +578,14 @@ function loadState(){
 
 function persist(){
   try{
-    localStorage.setItem('tt_days',JSON.stringify(DAYS));
-    localStorage.setItem('tt_st',JSON.stringify(ST));
-    localStorage.setItem('tt_mc',JSON.stringify(MC));
-    localStorage.setItem('tt_wg',WG);
-    localStorage.setItem('tt_curday',curDay);
-    localStorage.setItem('tt_curweek',curWeek);
-    localStorage.setItem('tt_curtab',curTab);
-    localStorage.setItem('tt_mealtype',mealType);
+    localStorage.setItem(uPfx('days'),JSON.stringify(DAYS));
+    localStorage.setItem(uPfx('st'),JSON.stringify(ST));
+    localStorage.setItem(uPfx('mc'),JSON.stringify(MC));
+    localStorage.setItem(uPfx('wg'),WG);
+    localStorage.setItem(uPfx('curday'),curDay);
+    localStorage.setItem(uPfx('curweek'),curWeek);
+    localStorage.setItem(uPfx('curtab'),curTab);
+    localStorage.setItem(uPfx('mealtype'),mealType);
   }catch(e){}
   showToast();
 }
@@ -977,7 +1026,8 @@ function buildDayReport(d,w){
 
   lines.push('# TESI Trainer — Week '+w+' | '+day.day);
   lines.push('**Focus:** '+day.focus+'  |  **Date:** '+today);
-  lines.push('**Athlete profile:** 75 kg body weight · 170 cm · Bench 1RM ~56 kg · Hisar, Haryana · 6 AM sessions');
+  var u=getActiveUser()||{};
+  lines.push('**Athlete profile:** '+(u.weight||75)+' kg body weight · '+(u.height||170)+' cm · Bench 1RM ~'+(u.bench1rm||56)+' kg · '+(u.location||'Hisar, Haryana')+' · 6 AM sessions');
   lines.push('');
 
   if(day.isRest){
@@ -1049,7 +1099,8 @@ function buildWeekReport(w){
   var today=new Date().toLocaleDateString('en-IN',{year:'numeric',month:'long',day:'numeric'});
   var lines=[];
   lines.push('# TESI Trainer — Week '+w+' Full Report');
-  lines.push('**Generated:** '+today+'  |  **Athlete:** 75 kg · 170 cm · Bench 1RM ~56 kg · Hisar, Haryana');
+  var u=getActiveUser()||{};
+  lines.push('**Generated:** '+today+'  |  **Athlete:** '+(u.name||'Athlete')+' · '+(u.weight||75)+' kg · '+(u.height||170)+' cm · Bench 1RM ~'+(u.bench1rm||56)+' kg · '+(u.location||'Hisar, Haryana'));
   lines.push('');
 
   // Week overview table
@@ -1195,10 +1246,145 @@ function esc(s){
 }
 function todayStr(){return new Date().toISOString().slice(0,10);}
 
+// ── Multi-user ─────────────────────────────────────────────────────────────────
+var USERS=[], activeUserId=null, editingUserId=null;
+var UP_COLORS=['#00e5a0','#4da6ff','#ffb347','#ff4d6d','#c084fc','#22d3ee'];
+
+function uPfx(k){return 'tt_u'+(activeUserId||'_')+'_'+k;}
+function getActiveUser(){return USERS.find(function(u){return u.id===activeUserId;})||null;}
+
+function loadUsers(){
+  try{var u=localStorage.getItem('tt_users');USERS=u?JSON.parse(u):[];}catch(e){USERS=[];}
+  try{activeUserId=localStorage.getItem('tt_uid')||null;}catch(e){activeUserId=null;}
+}
+function saveUsers(){try{localStorage.setItem('tt_users',JSON.stringify(USERS));}catch(e){}}
+function setActiveUser(id){activeUserId=id;try{localStorage.setItem('tt_uid',id);}catch(e){}}
+
+function openUserPicker(){
+  renderUserCards();
+  document.getElementById('userPick').style.display='flex';
+}
+function closeUserPicker(){document.getElementById('userPick').style.display='none';}
+
+function renderUserCards(){
+  var el=document.getElementById('userCards');if(!el)return;
+  if(!USERS.length){el.innerHTML='';return;}
+  el.innerHTML=USERS.map(function(u,i){
+    var col=u.color||UP_COLORS[i%UP_COLORS.length];
+    var ini=(u.name||'?').trim().charAt(0).toUpperCase();
+    return '<div class="ucard" onclick="switchToUser(\''+u.id+'\')">'
+      +'<div class="ucard-av" style="background:'+col+'">'+ini+'</div>'
+      +'<div class="ucard-nm">'+esc(u.name||'User')+'</div>'
+      +'<div class="ucard-info">'+(u.weight?u.weight+' kg':'')+(u.weight&&u.location?' &middot; ':'')+(u.location?esc(u.location):'')+'</div>'
+      +'<button class="ucard-edit" onclick="event.stopPropagation();openUPMod(\''+u.id+'\')">&#9998;</button>'
+      +'</div>';
+  }).join('');
+}
+
+function openUPMod(uid){
+  editingUserId=uid;
+  var u=uid?USERS.find(function(x){return x.id===uid;}):null;
+  document.getElementById('upmTitle').textContent=u?'Edit Profile':'New Profile';
+  document.getElementById('upmName').value=u?u.name:'';
+  document.getElementById('upmWeight').value=u?u.weight:'';
+  document.getElementById('upmHeight').value=u?u.height:'';
+  document.getElementById('upmBench').value=u?u.bench1rm:'';
+  document.getElementById('upmLoc').value=u?u.location:'';
+  document.getElementById('upmDel').style.display=(u&&USERS.length>1)?'block':'none';
+  document.getElementById('upmOverlay').style.display='flex';
+  setTimeout(function(){document.getElementById('upmName').focus();},60);
+}
+function closeUPMod(){document.getElementById('upmOverlay').style.display='none';}
+
+function saveUserProfile(){
+  var name=(document.getElementById('upmName').value||'').trim();
+  if(!name){document.getElementById('upmName').focus();return;}
+  var weight=parseFloat(document.getElementById('upmWeight').value)||0;
+  var height=parseFloat(document.getElementById('upmHeight').value)||0;
+  var bench=parseFloat(document.getElementById('upmBench').value)||0;
+  var loc=(document.getElementById('upmLoc').value||'').trim();
+
+  if(editingUserId){
+    var u=USERS.find(function(x){return x.id===editingUserId;});
+    if(u){u.name=name;u.weight=weight;u.height=height;u.bench1rm=bench;u.location=loc;}
+  } else {
+    var newId='u'+Date.now();
+    var colorIdx=USERS.length%UP_COLORS.length;
+    USERS.push({id:newId,name:name,weight:weight,height:height,bench1rm:bench,location:loc,color:UP_COLORS[colorIdx]});
+    // Migrate old unprefixed data for very first user
+    if(USERS.length===1){
+      var oldKeys={st:'tt_st',days:'tt_days',mc:'tt_mc',wg:'tt_wg',curday:'tt_curday',curweek:'tt_curweek',curtab:'tt_curtab',mealtype:'tt_mealtype',bwl:'tt_bwl',prh:'tt_prh'};
+      Object.keys(oldKeys).forEach(function(k){
+        var newKey='tt_u'+newId+'_'+k;
+        if(!localStorage.getItem(newKey)){var d=localStorage.getItem(oldKeys[k]);if(d)localStorage.setItem(newKey,d);}
+      });
+    }
+    editingUserId=newId;
+  }
+  saveUsers();
+  closeUPMod();
+  // Switch to this user if it's new
+  if(!activeUserId||USERS.length===1){
+    switchToUser(editingUserId);
+  } else {
+    renderUserCards();
+    renderHeader();
+  }
+}
+
+function deleteUser(){
+  if(!editingUserId||USERS.length<=1)return;
+  if(!confirm('Delete this profile? All their data will be removed.'))return;
+  var id=editingUserId;
+  USERS=USERS.filter(function(u){return u.id!==id;});
+  saveUsers();
+  // Remove all user data
+  Object.keys(localStorage).filter(function(k){return k.startsWith('tt_u'+id+'_');}).forEach(function(k){localStorage.removeItem(k);});
+  closeUPMod();
+  if(activeUserId===id){
+    switchToUser(USERS[0].id);
+  } else {
+    renderUserCards();
+  }
+}
+
+function switchToUser(id){
+  setActiveUser(id);
+  stopSessTimer();sessTimerIid=null;
+  loadState();loadBW();loadPR();
+  initMissingKeys();
+  closeUserPicker();
+  initApp();
+}
+
+function renderHeader(){
+  var u=getActiveUser();
+  var pt=document.getElementById('profileTop');
+  var ps=document.getElementById('profileSub');
+  if(!u||!pt||!ps)return;
+  pt.innerHTML=(u.weight||'--')+' kg &middot; '+(u.height||'--')+' cm<br>'+(u.location||'--')+'<br><span style="color:var(--accent);font-size:10px">&#8644; switch</span>';
+  ps.innerHTML=''
+    +'<div class="sub" style="margin:0">Bench ~'+(u.bench1rm||'--')+' kg &middot; 6-day split &middot; 6 AM</div>'
+    +'<span class="bw-chip" onclick="openBW()">&#9878; <span id="bwToday">--</span> kg<span class="bw-spark" id="bwSpark"></span></span>'
+    +'<button onclick="openPR()" style="font-size:11px;color:var(--pmp);background:var(--pdim);border:1px solid rgba(255,179,71,.3);border-radius:20px;padding:3px 10px;cursor:pointer">&#127942; PRs</button>';
+  updateBWChip();
+}
+
+function initApp(){
+  document.getElementById('weekLabel').textContent='Week '+curWeek;
+  document.getElementById('weekBadge').textContent='WK '+curWeek;
+  renderHeader();
+  var wt=document.getElementById('workoutTab'),mt=document.getElementById('mealTab');
+  var nw=document.getElementById('nb-w'),nm=document.getElementById('nb-m');
+  if(curTab==='meal'){wt.style.display='none';mt.style.display='';nw.classList.remove('on');nm.classList.add('on');renderMeal();}
+  else{wt.style.display='';mt.style.display='none';nw.classList.add('on');nm.classList.remove('on');}
+  renderTabs();renderMain();resumeSessTimer();
+}
+
 // ── Body Weight Log ────────────────────────────────────────────────────────────
 var BW_LOG=[];
-function loadBW(){try{var b=localStorage.getItem('tt_bwl');BW_LOG=b?JSON.parse(b):[];}catch(e){BW_LOG=[];}}
-function saveBW(){try{localStorage.setItem('tt_bwl',JSON.stringify(BW_LOG));}catch(e){}}
+function loadBW(){try{var b=localStorage.getItem(uPfx('bwl'));BW_LOG=b?JSON.parse(b):[];}catch(e){BW_LOG=[];}}
+function saveBW(){try{localStorage.setItem(uPfx('bwl'),JSON.stringify(BW_LOG));}catch(e){}}
 function getBWToday(){var t=todayStr();for(var i=BW_LOG.length-1;i>=0;i--){if(BW_LOG[i].d===t)return BW_LOG[i].w;}return null;}
 function openBW(){
   var cur=getBWToday();
@@ -1248,8 +1434,8 @@ function updateBWChip(){
 
 // ── PR History ─────────────────────────────────────────────────────────────────
 var PR_HIST={};
-function loadPR(){try{var p=localStorage.getItem('tt_prh');PR_HIST=p?JSON.parse(p):{};}catch(e){PR_HIST={}; }}
-function savePR(){try{localStorage.setItem('tt_prh',JSON.stringify(PR_HIST));}catch(e){}}
+function loadPR(){try{var p=localStorage.getItem(uPfx('prh'));PR_HIST=p?JSON.parse(p):{};}catch(e){PR_HIST={};}}
+function savePR(){try{localStorage.setItem(uPfx('prh'),JSON.stringify(PR_HIST));}catch(e){}}
 function epley(w,r){var wn=parseFloat(w)||0,rn=parseInt(r)||0;return rn<=1?wn:Math.round(wn*(1+rn/30)*10)/10;}
 function checkPR(exName,weight,reps){
   var wn=parseFloat(weight)||0,rn=parseInt(reps)||0;
@@ -1348,22 +1534,24 @@ function exReadyToProgress(d,s,e){
 }
 
 // ── Boot ───────────────────────────────────────────────────────────────────────
-loadState();
-loadBW();
-loadPR();
-initMissingKeys();
-document.getElementById('weekLabel').textContent='Week '+curWeek;
-document.getElementById('weekBadge').textContent='WK '+curWeek;
-updateBWChip();
-if(curTab==='meal'){
-  document.getElementById('workoutTab').style.display='none';
-  document.getElementById('mealTab').style.display='';
-  document.getElementById('nb-w').classList.remove('on');
-  document.getElementById('nb-m').classList.add('on');
-  renderMeal();
+loadUsers();
+if(!USERS.length){
+  // First launch — show picker with no cards, open create profile
+  document.getElementById('userPick').style.display='flex';
+  openUPMod(null);
+} else {
+  // Validate active user
+  if(!activeUserId||!getActiveUser())activeUserId=USERS[0].id;
+  setActiveUser(activeUserId);
+  loadState();loadBW();loadPR();
+  initMissingKeys();
+  initApp();
 }
-renderTabs();renderMain();
-resumeSessTimer();
+
+// Service worker registration (PWA)
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(function(){});
+}
 </script>
 </body>
 </html>
