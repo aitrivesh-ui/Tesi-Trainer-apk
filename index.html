@@ -901,7 +901,7 @@ function renderMain(){
   h+='<div class="sbox"><div class="sv" id="sDone">0</div><div class="sl">Done</div><div class="ss">of <span id="sTotal">0</span></div></div>';
   h+='<div class="sbox"><div class="sv" id="sSets">0</div><div class="sl">Sets</div></div>';
   h+='<div class="sbox"><div class="sv" id="sVol">0</div><div class="sl">Vol kg</div></div>';
-  h+='<div class="sbox"><div class="sv sess-timer" id="sessTimerDisp">—</div><div class="sl">Time</div><div class="ss" id="sPct">0%</div></div>';
+  h+='<div class="sbox" style="cursor:pointer" onclick="onTimerBoxClick()"><div class="sv sess-timer" id="sessTimerDisp">—</div><div class="sl">Time</div><div class="ss" id="sessTimerSub">0%</div></div>';
   h+='</div>';
   h+='<div class="prog"><div class="prog-fill" id="pFill" style="width:0%"></div></div>';
 
@@ -1137,6 +1137,10 @@ function resetDay(){
       ex.sets.forEach(function(_,si){ST[sk(w,d,s,e,si,'r')]='';});
     });
   });
+  // Clear session timer so it restarts fresh
+  delete ST['SSTART_'+w+'_'+d];
+  delete ST['SEND_'+w+'_'+d];
+  stopSessTimer();
   persist();renderMain();
 }
 
@@ -1163,9 +1167,12 @@ function updateStats(){
     document.getElementById('sTotal').textContent=total;
     document.getElementById('sSets').textContent=wsets;
     document.getElementById('sVol').textContent=Math.round(vol);
-    document.getElementById('sPct').textContent=pct+'%';
+    var subEl=document.getElementById('sessTimerSub');
+    if(subEl)subEl.textContent=pct+'%';
     document.getElementById('pFill').style.width=pct+'%';
     updateSessDisplay();
+    // Auto-stop timer when all exercises are done
+    if(done===total&&total>0)autoEndSession();
   }
 }
 
@@ -1852,22 +1859,69 @@ function updateRestDisplay(){
 // ── Session Timer ──────────────────────────────────────────────────────────────
 var sessTimerIid=null;
 function getSessKey(){return 'SSTART_'+curWeek+'_'+curDay;}
+function getSessEndKey(){return 'SEND_'+curWeek+'_'+curDay;}
 function ensureSessStart(){
   var k=getSessKey();
   if(!ST[k]){ST[k]=Date.now();persist();}
-  if(!sessTimerIid)sessTimerIid=setInterval(updateSessDisplay,1000);
+  // Don't restart if already ended
+  if(!ST[getSessEndKey()]&&!sessTimerIid)sessTimerIid=setInterval(updateSessDisplay,1000);
 }
+function autoEndSession(){
+  var ek=getSessEndKey();
+  if(ST[ek])return; // already ended
+  var startK=getSessKey();
+  if(!ST[startK])return; // never started
+  ST[ek]=Date.now();
+  persist();
+  stopSessTimer();
+  updateSessDisplay();
+  // Show quick "Done!" flash on sub-label
+  var sub=document.getElementById('sessTimerSub');
+  if(sub){sub.textContent='Done ✓';sub.style.color='var(--accent)';}
+}
+function manualEndSession(){
+  var ek=getSessEndKey();
+  if(ST[ek]){
+    // Already ended — tap to reset (restart timer for this day)
+    if(!confirm('Restart workout timer for this day?'))return;
+    delete ST[ek];
+    delete ST[getSessKey()];
+    persist();
+    stopSessTimer();
+    updateSessDisplay();
+    return;
+  }
+  var startK=getSessKey();
+  if(!ST[startK]){alert('Log a set first to start the timer.');return;}
+  if(!confirm('End workout timer now?'))return;
+  ST[ek]=Date.now();
+  persist();
+  stopSessTimer();
+  updateSessDisplay();
+  var sub=document.getElementById('sessTimerSub');
+  if(sub){sub.textContent='Done ✓';sub.style.color='var(--accent)';}
+}
+function onTimerBoxClick(){manualEndSession();}
 function updateSessDisplay(){
   var el=document.getElementById('sessTimerDisp');if(!el)return;
   var start=ST[getSessKey()];
   if(!start){el.textContent='—';return;}
-  var elapsed=Math.floor((Date.now()-start)/1000);
+  var end=ST[getSessEndKey()];
+  var elapsed=Math.floor(((end||Date.now())-start)/1000);
   var m=Math.floor(elapsed/60),s=elapsed%60;
   el.textContent=m+(s<10?':0':':')+s;
+  var sub=document.getElementById('sessTimerSub');
+  if(sub){
+    if(end){sub.textContent='Done ✓';sub.style.color='var(--accent)';}
+    else{sub.textContent='tap to end';sub.style.color='';}
+  }
 }
 function resumeSessTimer(){
   var k=getSessKey();
-  if(ST[k]&&!sessTimerIid)sessTimerIid=setInterval(updateSessDisplay,1000);
+  var ek=getSessEndKey();
+  // Only resume if started and NOT already ended
+  if(ST[k]&&!ST[ek]&&!sessTimerIid)sessTimerIid=setInterval(updateSessDisplay,1000);
+  updateSessDisplay();
 }
 function stopSessTimer(){clearInterval(sessTimerIid);sessTimerIid=null;}
 
