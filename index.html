@@ -1850,12 +1850,50 @@ function flashPR(pr){
 // ── Rest Timer ─────────────────────────────────────────────────────────────────
 var REST_DUR={wu:60,str:180,hyo:90,pmp:60};
 var restState={active:false,remaining:0,total:0,type:'',iid:null};
+var restWakeLock=null;
+
+function acquireWakeLock(){
+  if(!('wakeLock' in navigator))return;
+  navigator.wakeLock.request('screen').then(function(wl){
+    restWakeLock=wl;
+    // If the screen was released (e.g. notification shade) and timer still running, reacquire
+    wl.addEventListener('release',function(){
+      if(restState.active&&restState.remaining>0)acquireWakeLock();
+    });
+  }).catch(function(){});
+}
+function releaseWakeLock(){
+  if(restWakeLock){restWakeLock.release().catch(function(){});restWakeLock=null;}
+}
+
+function playRestBeep(){
+  try{
+    var ctx=new(window.AudioContext||window.webkitAudioContext)();
+    // Three short beeps
+    [0,0.3,0.6].forEach(function(t){
+      var osc=ctx.createOscillator();
+      var gain=ctx.createGain();
+      osc.connect(gain);gain.connect(ctx.destination);
+      osc.frequency.value=880;
+      osc.type='sine';
+      gain.gain.setValueAtTime(0.5,ctx.currentTime+t);
+      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+0.25);
+      osc.start(ctx.currentTime+t);
+      osc.stop(ctx.currentTime+t+0.25);
+    });
+    setTimeout(function(){ctx.close();},2000);
+  }catch(e){}
+}
+
 function startRestTimer(type){
   clearInterval(restState.iid);
+  releaseWakeLock();
   var dur=REST_DUR[type]||90;
   restState={active:true,remaining:dur,total:dur,type:type,iid:null};
   var bar=document.getElementById('restBar');if(bar)bar.style.display='flex';
   updateRestDisplay();
+  // Keep screen on so the timer can count and fire alert when locked
+  acquireWakeLock();
   // Silently request notification permission so rest-over alert can fire
   if('Notification' in window&&Notification.permission==='default'){
     Notification.requestPermission().catch(function(){});
@@ -1864,7 +1902,10 @@ function startRestTimer(type){
     restState.remaining=Math.max(0,restState.remaining-1);
     if(restState.remaining===0){
       clearInterval(restState.iid);
-      if(navigator.vibrate)navigator.vibrate([200,100,200,100,200]);
+      restState.active=false;
+      releaseWakeLock();
+      if(navigator.vibrate)navigator.vibrate([300,150,300,150,600]);
+      playRestBeep();
       var typeLabel={wu:'Warm-up',str:'Strength',hyo:'Hypertrophy',pmp:'Pump'}[restState.type]||'Rest';
       fireNotif('TESI — Rest Over!',typeLabel+' rest done. Time for your next set! 💪');
     }
@@ -1872,7 +1913,9 @@ function startRestTimer(type){
   },1000);
 }
 function stopRestTimer(){
-  clearInterval(restState.iid);restState.active=false;
+  clearInterval(restState.iid);
+  restState.active=false;
+  releaseWakeLock();
   var bar=document.getElementById('restBar');if(bar)bar.style.display='none';
 }
 function updateRestDisplay(){
