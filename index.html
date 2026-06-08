@@ -331,6 +331,17 @@ html,body{width:100%;overflow-x:hidden;background:#0a0a0f;font-family:'Inter',sa
 .ai-tab{flex:1;padding:8px 4px;font-size:12px;font-weight:500;background:var(--bg3);border:1px solid var(--bdr2);border-radius:8px;color:var(--t3);cursor:pointer;font-family:'Inter',sans-serif;touch-action:manipulation}
 .ai-tab.on{background:var(--pdim);border-color:rgba(255,179,71,.4);color:var(--pmp)}
 .ai-error{background:var(--rdim);border:1px solid rgba(255,77,109,.3);border-radius:8px;padding:12px 14px;color:var(--red);font-size:13px;line-height:1.5;margin-bottom:12px}
+.ai-changes{background:var(--bg3);border:1px solid rgba(0,229,160,.2);border-radius:12px;padding:14px;margin-top:14px}
+.ai-changes-title{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:var(--accent);letter-spacing:.5px;margin-bottom:10px}
+.ai-change-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bdr);font-size:12px}
+.ai-change-row:last-of-type{border-bottom:none}
+.ai-change-cb{width:18px;height:18px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
+.ai-change-info{flex:1;min-width:0}
+.ai-change-ex{font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ai-change-detail{color:var(--accent);margin-top:1px}
+.ai-change-reason{font-size:11px;color:var(--t3);margin-top:2px;line-height:1.4}
+.ai-apply-btn{width:100%;margin-top:12px;padding:13px;background:var(--accent);border:none;border-radius:10px;color:#000;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;touch-action:manipulation}
+.ai-applied-badge{display:inline-block;background:var(--adim);border:1px solid rgba(0,229,160,.3);color:var(--accent);border-radius:6px;font-size:11px;padding:2px 8px;margin-left:6px}
 </style>
 </head>
 <body>
@@ -2435,35 +2446,60 @@ function buildAIPrompt(data,tab){
   lines.push('Target: '+(data.mealPlan.totalKcal||'?')+' kcal | Protein: '+(data.mealPlan.protein||'?'));
   (data.mealPlan.meals||[]).forEach(function(m){lines.push('  '+m.name+' ('+m.time+'): '+m.kcal);});
 
+  // Include current exercise defaults so AI knows baseline weights
   lines.push('');
-  if(tab==='train'){
-    lines.push('## Task');
-    lines.push('Based on the workout history and PRs above, provide a TRAINING PLAN recommendation:');
-    lines.push('1. Assess progress and identify weak points or imbalances');
-    lines.push('2. Suggest specific weight/rep adjustments for key exercises next week');
-    lines.push('3. Recommend any exercise swaps or technique cues');
-    lines.push('4. Give a motivational insight based on the data');
-    lines.push('Keep the response practical, specific, and under 400 words.');
-  } else if(tab==='diet'){
+  lines.push('## Current Exercise Defaults (for reference when suggesting changes)');
+  (DAYS||[]).forEach(function(day,d){
+    if(day.isRest)return;
+    (day.sections||[]).forEach(function(sec){
+      (sec.exercises||[]).forEach(function(ex){
+        var workingSets=(ex.sets||[]).filter(function(s){return s.tr;});
+        if(!workingSets.length)return;
+        var wts=workingSets.map(function(s){return s.l+':'+s.w1+'kg×'+s.r+'r';}).join(', ');
+        lines.push('  '+ex.name+' — '+wts);
+      });
+    });
+  });
+
+  lines.push('');
+  if(tab==='diet'){
     lines.push('## Task');
     lines.push('Based on the body weight trend and meal plan above, provide a DIET recommendation:');
     lines.push('1. Assess calorie and protein targets vs. goal');
     lines.push('2. Suggest specific meal timing or macro adjustments');
-    lines.push('3. Recommend foods that support muscle gain or fat loss based on the goal');
+    lines.push('3. Recommend foods that support muscle gain or fat loss based on the data');
     lines.push('4. Flag any nutritional gaps or improvements');
     lines.push('Keep the response practical, specific, and under 400 words.');
   } else {
-    lines.push('## Task');
-    lines.push('Provide a FULL COACHING REPORT with two clearly labelled sections:');
-    lines.push('### TRAINING PLAN');
-    lines.push('- Assess progress and identify areas to push harder or deload');
-    lines.push('- Suggest specific weight/rep changes for key exercises next week');
-    lines.push('- Note any muscle groups being undertrained or overtrained');
-    lines.push('### DIET PLAN');
-    lines.push('- Assess current calorie and protein intake vs. the goal');
-    lines.push('- Suggest macro adjustments and meal timing tweaks');
-    lines.push('- Recommend 2-3 specific food swaps or additions');
-    lines.push('Keep each section under 250 words. Be direct and data-driven.');
+    if(tab==='train'){
+      lines.push('## Task');
+      lines.push('Based on the workout history and PRs above, provide a TRAINING PLAN recommendation:');
+      lines.push('1. Assess progress and identify weak points or imbalances');
+      lines.push('2. Give a motivational insight based on the data');
+    } else {
+      lines.push('## Task');
+      lines.push('Provide a FULL COACHING REPORT with two clearly labelled sections:');
+      lines.push('### TRAINING PLAN');
+      lines.push('- Assess progress and identify areas to push harder or deload');
+      lines.push('- Note any muscle groups being undertrained or overtrained');
+      lines.push('### DIET PLAN');
+      lines.push('- Assess current calorie and protein intake vs. the goal');
+      lines.push('- Suggest macro adjustments and meal timing tweaks');
+      lines.push('- Recommend 2-3 specific food swaps or additions');
+      lines.push('Keep each section under 200 words. Be direct and data-driven.');
+    }
+    lines.push('');
+    lines.push('## Proposed Schedule Changes (REQUIRED)');
+    lines.push('After your text response, output a JSON block with ONLY exercises where you are confident a weight change is justified by the data. Use this exact format with no extra text after the block:');
+    lines.push('```json');
+    lines.push('{"changes":[{"exerciseName":"Flat Bench Press","setLabel":"STR","newWeight":50,"oldWeight":47,"reason":"Hit all reps 2 weeks running"}]}');
+    lines.push('```');
+    lines.push('Rules for the JSON:');
+    lines.push('- exerciseName must match exactly one of the exercise names listed above');
+    lines.push('- setLabel must match one of its set labels (e.g. "STR", "HYO 1", "PMP 1")');
+    lines.push('- newWeight must be a number (kg), use 2.5 kg increments for upper body, 5 kg for legs');
+    lines.push('- Only include changes where the data clearly supports it (consistently hit reps)');
+    lines.push('- If no changes are justified, output: {"changes":[]}');
   }
 
   return lines.join('\n');
@@ -2484,6 +2520,88 @@ function renderAIDataSummary(data){
     +'</div>';
 }
 
+var pendingAIChanges=[];
+
+function parseAIChanges(text){
+  // Extract JSON block from ```json ... ```
+  var m=text.match(/```json\s*([\s\S]*?)```/);
+  if(!m)return null;
+  try{
+    var parsed=JSON.parse(m[1].trim());
+    return Array.isArray(parsed.changes)?parsed.changes:null;
+  }catch(e){return null;}
+}
+
+function stripAIChangesBlock(text){
+  return text.replace(/```json[\s\S]*?```/g,'').trim();
+}
+
+function renderAIChangesUI(changes){
+  if(!changes||!changes.length)return '';
+  var h='<div class="ai-changes">';
+  h+='<div class="ai-changes-title">&#9889; Proposed Schedule Updates for Next Week</div>';
+  changes.forEach(function(c,i){
+    var old=c.oldWeight!=null?' (was '+c.oldWeight+'kg)':'';
+    h+='<div class="ai-change-row">';
+    h+='<input class="ai-change-cb" type="checkbox" id="aic'+i+'" checked>';
+    h+='<div class="ai-change-info">';
+    h+='<div class="ai-change-ex">'+esc(c.exerciseName)+' — '+esc(c.setLabel)+'</div>';
+    h+='<div class="ai-change-detail">'+c.newWeight+' kg'+old+'</div>';
+    if(c.reason)h+='<div class="ai-change-reason">'+esc(c.reason)+'</div>';
+    h+='</div></div>';
+  });
+  h+='<button class="ai-apply-btn" onclick="applyAIChanges()">&#9989; Apply to Next Week\'s Plan</button>';
+  h+='</div>';
+  return h;
+}
+
+function applyAIChanges(){
+  var applied=0;
+  pendingAIChanges.forEach(function(c,i){
+    var cb=document.getElementById('aic'+i);
+    if(!cb||!cb.checked)return;
+    // Find exercise by name in DAYS
+    var found=false;
+    (DAYS||[]).forEach(function(day,d){
+      (day.sections||[]).forEach(function(sec,s){
+        (sec.exercises||[]).forEach(function(ex,e){
+          if(ex.name.toLowerCase()!==c.exerciseName.toLowerCase())return;
+          (ex.sets||[]).forEach(function(set,si){
+            if(set.l.toLowerCase()!==c.setLabel.toLowerCase())return;
+            // Update default weight in DAYS
+            set.w1=c.newWeight;
+            // Pre-fill next week's weight in ST
+            var nextW=curWeek+1;
+            var key=sk(nextW,d,s,e,si,'w');
+            ST[key]=c.newWeight;
+            found=true;
+            applied++;
+          });
+        });
+      });
+    });
+    if(!found)console.warn('AI change: exercise not found:',c.exerciseName,c.setLabel);
+  });
+
+  if(!applied){alert('No changes selected or exercises could not be matched.');return;}
+  persist();
+
+  // Replace apply button with confirmation
+  var applyBtn=document.querySelector('.ai-apply-btn');
+  if(applyBtn){
+    applyBtn.disabled=true;
+    applyBtn.textContent='✓ Applied '+applied+' change'+(applied===1?'':'s')+' to next week!';
+    applyBtn.style.background='var(--adim)';
+    applyBtn.style.border='1px solid rgba(0,229,160,.3)';
+    applyBtn.style.color='var(--accent)';
+  }
+  // Uncheck applied checkboxes
+  pendingAIChanges.forEach(function(_,i){
+    var cb=document.getElementById('aic'+i);
+    if(cb)cb.disabled=true;
+  });
+}
+
 function generateAIReport(){
   var key=(localStorage.getItem('tt_ai_key')||'').trim();
   if(!key){
@@ -2501,6 +2619,7 @@ function generateAIReport(){
 
   var btn=document.getElementById('aiGenBtn');
   if(btn)btn.disabled=true;
+  pendingAIChanges=[];
   document.getElementById('aiBody').innerHTML='<div class="ai-loading"><div class="ai-spin"></div><div class="ai-loading-txt">Analysing your data with AI...</div></div>';
 
   var data=collectAIData();
@@ -2516,7 +2635,7 @@ function generateAIReport(){
     },
     body:JSON.stringify({
       model:'claude-haiku-4-5-20251001',
-      max_tokens:1024,
+      max_tokens:1500,
       messages:[{role:'user',content:prompt}]
     })
   }).then(function(r){
@@ -2527,15 +2646,22 @@ function generateAIReport(){
     }
     return r.json();
   }).then(function(json){
-    var text=(json.content&&json.content[0]&&json.content[0].text)||'No response.';
+    var rawText=(json.content&&json.content[0]&&json.content[0].text)||'No response.';
+    var changes=parseAIChanges(rawText);
+    var displayText=stripAIChangesBlock(rawText);
+    pendingAIChanges=changes||[];
+
     var summary=renderAIDataSummary(data);
     var tabLabel=aiCurrentTab==='full'?'Full Report':aiCurrentTab==='train'?'Training Plan':'Diet Plan';
+    var changesHtml=aiCurrentTab!=='diet'?renderAIChangesUI(changes):'';
+
     document.getElementById('aiBody').innerHTML=
       summary+
       '<div class="ai-section">'+
         '<div class="ai-sec-title">&#129302; '+tabLabel+'</div>'+
-        '<div class="ai-content">'+esc(text)+'</div>'+
-      '</div>';
+        '<div class="ai-content">'+esc(displayText)+'</div>'+
+      '</div>'+
+      changesHtml;
     if(btn)btn.disabled=false;
   }).catch(function(err){
     document.getElementById('aiBody').innerHTML='<div class="ai-error">&#9888; Error: '+esc(err.message)+'<br><br>Check your API key or internet connection. Make sure the key has access to Claude Haiku.</div>';
