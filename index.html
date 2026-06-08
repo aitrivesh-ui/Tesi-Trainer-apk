@@ -1442,6 +1442,18 @@ function startNotifChecker(){
   notifCheckIid=setInterval(checkNotifs,60000);
   checkNotifs();
 }
+function fireNotif(title,body){
+  // Use SW-based showNotification — works in PWA standalone mode on Android
+  if('serviceWorker' in navigator&&Notification.permission==='granted'){
+    navigator.serviceWorker.ready.then(function(reg){
+      reg.showNotification(title,{body:body,icon:'./icons/icon-192.png',badge:'./icons/icon-192.png',vibrate:[200,100,200],requireInteraction:false});
+    }).catch(function(){
+      try{new Notification(title,{body:body,icon:'./icons/icon-192.png'});}catch(e){}
+    });
+  } else {
+    try{new Notification(title,{body:body,icon:'./icons/icon-192.png'});}catch(e){}
+  }
+}
 function checkNotifs(){
   if(!('Notification' in window)||Notification.permission!=='granted')return;
   var now=new Date();
@@ -1457,15 +1469,21 @@ function checkNotifs(){
       var diff=(t.h*60+t.m)-(now.getHours()*60+now.getMinutes());
       if(diff>=0&&diff<=1){
         notifFiredToday[fk]=true;
-        try{new Notification('TESI — '+meal.nm,{body:'Time to eat! '+meal.kc,icon:'./icons/icon-192.png',silent:false});}catch(e){}
+        fireNotif('TESI — '+meal.nm,'Time to eat! '+meal.kc);
       }
     });
   }
   if(NOTIF_PREFS.w){
-    var wh=now.getHours(),wk='wt'+wh;
+    var wh=now.getHours();
+    // Fire every 2 hours from 6 AM to 10 PM
+    var wk='wt'+wh;
     if(!notifFiredToday[wk]&&wh>=6&&wh<=22&&wh%2===0){
       notifFiredToday[wk]=true;
-      try{new Notification('TESI — Water Reminder',{body:'Drink a glass! '+WG+'/14 today.',icon:'./icons/icon-192.png',silent:false});}catch(e){}
+      var glasses=WG||0;
+      var msg=glasses===0?'Time to start hydrating! Goal: 14 glasses today.'
+              :glasses>=14?'Hydration goal reached! '+glasses+'/14 ✓'
+              :'Drink a glass of water! '+glasses+'/14 so far today.';
+      fireNotif('TESI — Water Reminder',msg);
     }
   }
 }
@@ -1838,9 +1856,18 @@ function startRestTimer(type){
   restState={active:true,remaining:dur,total:dur,type:type,iid:null};
   var bar=document.getElementById('restBar');if(bar)bar.style.display='flex';
   updateRestDisplay();
+  // Silently request notification permission so rest-over alert can fire
+  if('Notification' in window&&Notification.permission==='default'){
+    Notification.requestPermission().catch(function(){});
+  }
   restState.iid=setInterval(function(){
     restState.remaining=Math.max(0,restState.remaining-1);
-    if(restState.remaining===0){clearInterval(restState.iid);if(navigator.vibrate)navigator.vibrate([200,100,200,100,200]);}
+    if(restState.remaining===0){
+      clearInterval(restState.iid);
+      if(navigator.vibrate)navigator.vibrate([200,100,200,100,200]);
+      var typeLabel={wu:'Warm-up',str:'Strength',hyo:'Hypertrophy',pmp:'Pump'}[restState.type]||'Rest';
+      fireNotif('TESI — Rest Over!',typeLabel+' rest done. Time for your next set! 💪');
+    }
     updateRestDisplay();
   },1000);
 }
