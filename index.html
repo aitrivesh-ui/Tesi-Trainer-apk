@@ -112,6 +112,9 @@ html,body{width:100%;overflow-x:hidden;background:#0a0a0f;font-family:'Inter',sa
 .done-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--bdr)}
 .done-left{display:flex;align-items:center;gap:10px}
 .dbtn{min-width:36px;height:36px;border:1px solid var(--bdr2);border-radius:8px;background:var(--bg3);color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.ex-skip-btn{font-size:11px;color:var(--red);background:var(--rdim);border:1px solid rgba(255,77,109,.25);border-radius:20px;padding:6px 12px;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif;touch-action:manipulation}
+.excard.exskipped{opacity:.5;border-color:rgba(255,77,109,.25)}
+.excard.exskipped .exnm{text-decoration:line-through;color:var(--t3)}
 .dbtn.on{background:var(--accent);border-color:var(--accent);color:#000}
 .dlbl{font-size:13px;color:var(--t3)}
 .add-set-btn{font-size:11px;color:var(--str);background:var(--sdim);border:1px solid rgba(77,166,255,0.25);border-radius:6px;padding:5px 10px;cursor:pointer}
@@ -874,6 +877,7 @@ function showToast(){
 function sk(w,d,s,e,si,t){return w+'_'+d+'_'+s+'_'+e+'_'+si+'_'+t;}
 function dk(w,d,s,e){return 'D_'+w+'_'+d+'_'+s+'_'+e;}
 function sk2(w,d){return 'SK_'+w+'_'+d;}
+function xk(w,d,s,e){return 'EXSK_'+w+'_'+d+'_'+s+'_'+e;}
 
 function initMissingKeys(){
   for(var w=1;w<=12;w++){
@@ -929,7 +933,7 @@ function renderTabs(){
     }
     var skipped=ST[sk2(curWeek,i)];
     var allDone=true;
-    d.sections.forEach(function(sec,s){sec.exercises.forEach(function(_,e){if(!ST[dk(curWeek,i,s,e)])allDone=false;});});
+    d.sections.forEach(function(sec,s){sec.exercises.forEach(function(_,e){if(!ST[dk(curWeek,i,s,e)]&&!ST[xk(curWeek,i,s,e)])allDone=false;});});
     var cls=skipped?'skipped':allDone?'done':'';
     var focusWord=d.focus.split(' ')[0];
     return '<button class="dtab '+cls+(i===curDay?' on':'')+'" onclick="switchDay('+i+')"><div>'+d.label+'</div><div class="day-sub">'+focusWord+'</div></button>';
@@ -1010,6 +1014,14 @@ function renderMain(){
     sec.exercises.forEach(function(ex,e){
       var done=ST[dk(w,d,s,e)];
       var isEditing=(editingEx===d+'_'+s+'_'+e);
+      var xskip=ST[xk(w,d,s,e)];
+      if(xskip&&!isEditing){
+        h+='<div class="excard exskipped"><div class="exhead">';
+        h+='<div class="exhead-left"><div class="exnm">'+esc(ex.name)+'</div><div class="exhint" style="color:var(--red)">Skipped this week</div></div>';
+        h+='<div class="ex-actions"><button class="edbtn" onclick="toggleExSkip('+d+','+s+','+e+')">&#8634; Unskip</button></div>';
+        h+='</div></div>';
+        return;
+      }
       h+='<div class="excard'+(done?' exdone':'')+'"><div class="exhead">';
       h+='<div class="exhead-left">';
       if(isEditing){
@@ -1084,7 +1096,9 @@ function renderMain(){
         h+='</div>';
       }
 
-      h+='<div class="done-row"><div class="done-left"><button class="dbtn'+(done?' on':'')+'" onclick="toggleDone('+d+','+s+','+e+')">&#10003;</button><span class="dlbl">'+(done?'Exercise done &#10003;':'Mark done')+'</span></div></div></div>';
+      h+='<div class="done-row"><div class="done-left"><button class="dbtn'+(done?' on':'')+'" onclick="toggleDone('+d+','+s+','+e+')">&#10003;</button><span class="dlbl">'+(done?'Exercise done &#10003;':'Mark done')+'</span></div>';
+      if(!done)h+='<button class="ex-skip-btn" onclick="toggleExSkip('+d+','+s+','+e+')">&#10007; Skip</button>';
+      h+='</div></div>';
     });
   });
 
@@ -1204,6 +1218,12 @@ function saveR(w,d,s,e,si,tgt,inp){
   }
 }
 function toggleDone(d,s,e){ST[dk(curWeek,d,s,e)]=!ST[dk(curWeek,d,s,e)];persist();renderTabs();renderMain();}
+function toggleExSkip(d,s,e){
+  var k=xk(curWeek,d,s,e);
+  ST[k]=!ST[k];
+  if(ST[k])ST[dk(curWeek,d,s,e)]=false;
+  persist();renderTabs();renderMain();
+}
 function toggleSkip(){ST[sk2(curWeek,curDay)]=!ST[sk2(curWeek,curDay)];persist();renderTabs();renderMain();}
 
 function resetDay(){
@@ -1212,6 +1232,7 @@ function resetDay(){
   DAYS[d].sections.forEach(function(sec,s){
     sec.exercises.forEach(function(ex,e){
       ST[dk(w,d,s,e)]=false;
+      delete ST[xk(w,d,s,e)];
       ex.sets.forEach(function(_,si){ST[sk(w,d,s,e,si,'r')]='';});
     });
   });
@@ -1229,6 +1250,7 @@ function updateStats(){
   var total=0,done=0,wsets=0,vol=0;
   day.sections.forEach(function(sec,s){
     sec.exercises.forEach(function(ex,e){
+      if(ST[xk(w,d,s,e)])return; // skipped exercises don't count
       total++;if(ST[dk(w,d,s,e)])done++;
       ex.sets.forEach(function(set,si){
         if(!set.tr)return;
@@ -2599,6 +2621,7 @@ function collectAIData(){
       var exData=[];
       (day.sections||[]).forEach(function(sec,s){
         (sec.exercises||[]).forEach(function(ex,e){
+          if(ST[xk(w,d,s,e)]){exData.push({name:ex.name,skipped:true,sets:[]});return;}
           var setData=[];
           (ex.sets||[]).forEach(function(set,si){
             var wv=ST[sk(w,d,s,e,si,'w')];
@@ -2633,7 +2656,7 @@ function collectAIData(){
     else{
       var allDone=true;
       (day.sections||[]).forEach(function(sec,s){
-        (sec.exercises||[]).forEach(function(_,e){if(!ST[dk(curWeek,d,s,e)])allDone=false;});
+        (sec.exercises||[]).forEach(function(_,e){if(!ST[dk(curWeek,d,s,e)]&&!ST[xk(curWeek,d,s,e)])allDone=false;});
       });
       if(allDone)doneCount++;
     }
@@ -2682,6 +2705,7 @@ function buildAIPrompt(data,tab){
       wk.days.forEach(function(d){
         if(d.skipped){lines.push('  '+d.day+' ('+d.focus+'): SKIPPED');return;}
         d.exercises.forEach(function(ex){
+          if(ex.skipped){lines.push('  '+d.day+' - '+ex.name+': SKIPPED');return;}
           var setStr=ex.sets.map(function(s){return (s.weight||'?')+'kg×'+(s.reps||'?');}).join(', ');
           lines.push('  '+d.day+' - '+ex.name+': '+setStr);
         });
