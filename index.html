@@ -437,9 +437,114 @@ html,body{width:100%;overflow-x:hidden;background:#0a0a0f;font-family:'Inter',sa
 .tpl-sub{font-size:11px;color:var(--t3);margin-top:3px;line-height:1.5}
 /* ── Swap hint ── */
 .swap-hint{font-size:11px;color:var(--str);margin-top:4px;line-height:1.5}
+
+/* ════ 3D MOTION LAYER ════ */
+/* ambient background orbs */
+.bg-fx{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.orb{position:absolute;border-radius:50%;filter:blur(70px);will-change:transform}
+.o1{width:320px;height:320px;background:radial-gradient(circle,rgba(0,229,160,.5),transparent 70%);top:-90px;left:-70px;opacity:.30;animation:drift1 24s ease-in-out infinite alternate}
+.o2{width:280px;height:280px;background:radial-gradient(circle,rgba(77,166,255,.5),transparent 70%);bottom:8%;right:-90px;opacity:.20;animation:drift2 30s ease-in-out infinite alternate}
+.o3{width:220px;height:220px;background:radial-gradient(circle,rgba(255,179,71,.5),transparent 70%);top:42%;left:55%;opacity:.12;animation:drift3 27s ease-in-out infinite alternate}
+@keyframes drift1{to{transform:translate3d(70px,130px,0) scale(1.2)}}
+@keyframes drift2{to{transform:translate3d(-90px,-70px,0) scale(1.12)}}
+@keyframes drift3{to{transform:translate3d(-60px,80px,0) scale(1.25)}}
+.app{position:relative;z-index:1}
+
+/* 3D keyframes */
+@keyframes cardIn{from{opacity:0;transform:perspective(900px) translateY(26px) rotateX(7deg) scale(.97)}to{opacity:1;transform:perspective(900px) translateY(0) rotateX(0) scale(1)}}
+@keyframes tabIn{from{opacity:0;transform:perspective(600px) rotateY(-24deg) translateX(-10px)}to{opacity:1;transform:none}}
+@keyframes pageIn{from{opacity:0;transform:perspective(1100px) translateY(20px) rotateX(4deg)}to{opacity:1;transform:none}}
+@keyframes sheetIn{from{opacity:0;transform:perspective(900px) translateY(48px) rotateX(7deg) scale(.98)}to{opacity:1;transform:none}}
+@keyframes flipIn{from{opacity:0;transform:perspective(500px) rotateY(70deg)}to{opacity:1;transform:none}}
+@keyframes navSpin{0%{transform:translateY(0) scale(1) rotateY(0)}50%{transform:translateY(-5px) scale(1.25) rotateY(180deg)}100%{transform:translateY(-2px) scale(1.12) rotateY(360deg)}}
+@keyframes logoSwing{0%,84%{transform:perspective(300px) rotateY(0)}89%{transform:perspective(300px) rotateY(22deg)}94%{transform:perspective(300px) rotateY(-16deg)}100%{transform:perspective(300px) rotateY(0)}}
+@keyframes shimmer{from{background-position:-200% 0}to{background-position:200% 0}}
+@keyframes glowPulse{0%,100%{box-shadow:0 3px 14px rgba(0,229,160,.35)}50%{box-shadow:0 4px 24px rgba(0,229,160,.65)}}
+
+/* page transition */
+.page-anim{animation:pageIn .42s cubic-bezier(.22,1,.36,1)}
+
+/* card entrances */
+.excard{animation:cardIn .55s cubic-bezier(.22,1,.36,1) backwards;animation-delay:.06s;transition:transform .15s,opacity .3s}
+.excard:active{transform:scale(.985)}
+.mcard{animation:cardIn .5s cubic-bezier(.22,1,.36,1) backwards;animation-delay:.05s}
+.pg-sec{animation:cardIn .5s cubic-bezier(.22,1,.36,1) backwards;animation-delay:.07s}
+.stats .sbox{animation:cardIn .45s cubic-bezier(.22,1,.36,1) backwards;transition:transform .12s}
+.stats .sbox:nth-child(1){animation-delay:.03s}
+.stats .sbox:nth-child(2){animation-delay:.09s}
+.stats .sbox:nth-child(3){animation-delay:.15s}
+.stats .sbox:nth-child(4){animation-delay:.21s}
+.stats .sbox:active{transform:scale(.95)}
+.pg-grid .pg-card{animation:cardIn .45s cubic-bezier(.22,1,.36,1) backwards}
+.pg-grid .pg-card:nth-child(1){animation-delay:.03s}
+.pg-grid .pg-card:nth-child(2){animation-delay:.09s}
+.pg-grid .pg-card:nth-child(3){animation-delay:.15s}
+.pg-grid .pg-card:nth-child(4){animation-delay:.21s}
+
+/* day tabs flip in */
+.dtab{animation:tabIn .4s cubic-bezier(.22,1,.36,1) backwards}
+.dtab:nth-child(1){animation-delay:.02s}.dtab:nth-child(2){animation-delay:.06s}
+.dtab:nth-child(3){animation-delay:.10s}.dtab:nth-child(4){animation-delay:.14s}
+.dtab:nth-child(5){animation-delay:.18s}.dtab:nth-child(6){animation-delay:.22s}
+.dtab:nth-child(7){animation-delay:.26s}
+.dtab.on{animation:tabIn .4s cubic-bezier(.22,1,.36,1) backwards,glowPulse 2.6s ease-in-out infinite}
+
+/* badges flip */
+.badge-grid .abadge{animation:flipIn .45s cubic-bezier(.22,1,.36,1) backwards}
+.badge-grid .abadge:nth-child(3n+1){animation-delay:.05s}
+.badge-grid .abadge:nth-child(3n+2){animation-delay:.12s}
+.badge-grid .abadge:nth-child(3n){animation-delay:.19s}
+.abadge.earned{position:relative;overflow:hidden}
+.abadge.earned::after{content:'';position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.14) 50%,transparent 70%);background-size:250% 100%;animation:shimmer 3.4s linear infinite}
+
+/* modal sheets rise in 3D */
+.bw-card,.pr-sheet,.share-sheet,.sync-card,.meal-edit-sh,.ai-sheet,.upm-card{animation:sheetIn .38s cubic-bezier(.22,1,.36,1)}
+
+/* nav icon 3D spin on activate */
+.nb .nbi{transform-style:preserve-3d}
+.nb.on .nbi{animation:navSpin .5s cubic-bezier(.34,1.56,.64,1) forwards}
+
+/* logo periodic 3D swing */
+.logo-mark{transform-style:preserve-3d;animation:logoSwing 8s ease-in-out infinite}
+
+/* progress bar shimmer */
+.prog-fill{position:relative;overflow:hidden}
+.prog-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);background-size:200% 100%;animation:shimmer 2.4s linear infinite}
+.pg-bar{position:relative;overflow:hidden}
+.pg-bar::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.18),transparent 60%)}
+
+/* tactile press physics */
+.hchip:active,.wn-btn:active,.skip-btn:active,.deload-btn:active,.edit-focus-btn:active,.add-ex-btn:active,.edbtn:active,.ex-skip-btn:active{transform:translateY(1px) scale(.94)}
+.hchip,.wn-btn,.skip-btn,.deload-btn,.edbtn,.ex-skip-btn{transition:transform .12s}
+.dbtn,.mchk{transition:transform .15s}
+.dbtn:active,.mchk:active{transform:scale(.85) rotate(-6deg)}
+.glbtn{transition:transform .18s cubic-bezier(.34,1.56,.64,1)}
+.glbtn:active{transform:scale(1.35)}
+.glbtn.on{transform:scale(1.06)}
+.profile-btn:active{transform:scale(.95)}
+.ai-gen-btn:active{transform:scale(.97)}
+.upm-save:active,.bw-save:active,.meal-add-btn:active{transform:scale(.97)}
+.upm-save,.bw-save,.meal-add-btn,.ai-gen-btn{transition:transform .12s}
+.wk-badge{animation:glowPulse 3s ease-in-out infinite}
+.ucard{transition:transform .15s}
+.ucard:active{transform:scale(.96) rotateX(4deg)}
+.tpl-card{transition:transform .14s}
+.ph-thumb,.ph-add{transition:transform .15s}
+.ph-thumb:active,.ph-add:active{transform:scale(.93)}
+
+/* glassier surfaces */
+.day-scroll{background:transparent}
+.hdr{background:linear-gradient(180deg,rgba(0,229,160,.06),transparent 70%),rgba(7,7,12,.6)}
+
+/* respect reduced motion */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
 </style>
 </head>
 <body>
+
+<div class="bg-fx"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
 
 <!-- User Picker (shown on first load / switch) -->
 <div class="user-pick" id="userPick" style="display:none">
@@ -1016,6 +1121,9 @@ function switchTab(tab,btn){
   persist();
   if(tab==='meal')renderMeal();
   if(tab==='progress')renderProgress();
+  // 3D page entrance
+  var pane=document.getElementById(tab==='workout'?'workoutTab':tab==='meal'?'mealTab':'progressTab');
+  if(pane){pane.classList.remove('page-anim');void pane.offsetWidth;pane.classList.add('page-anim');}
 }
 
 // ── Day tabs ───────────────────────────────────────────────────────────────────
