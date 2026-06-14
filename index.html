@@ -1045,6 +1045,7 @@ function loadState(){
 
 var fbAutoTimer=null;
 function persist(){
+  if(!activeUserId)return; // don't save to the null-user key
   try{
     localStorage.setItem(uPfx('days'),JSON.stringify(DAYS));
     localStorage.setItem(uPfx('st'),JSON.stringify(ST));
@@ -1054,8 +1055,18 @@ function persist(){
     localStorage.setItem(uPfx('curweek'),curWeek);
     localStorage.setItem(uPfx('curtab'),curTab);
     localStorage.setItem(uPfx('mealtype'),mealType);
-  }catch(e){}
-  showToast();
+    showToast(); // only show if saves above all succeeded
+  }catch(e){
+    // Save failed (QuotaExceededError or similar) — try trimming old weeks and retrying once
+    try{
+      pruneOldST();
+      localStorage.setItem(uPfx('st'),JSON.stringify(ST));
+      localStorage.setItem(uPfx('days'),JSON.stringify(DAYS));
+      showToast();
+    }catch(e2){
+      showErrorToast('Storage full — old data pruned. Connect cloud sync to back up.');
+    }
+  }
   // Auto-push to Firebase after 10s idle (debounced)
   if(fbDb&&fbUser){
     clearTimeout(fbAutoTimer);
@@ -1063,12 +1074,31 @@ function persist(){
   }
 }
 
+function pruneOldST(){
+  // Keep only last 6 weeks of ST data to prevent localStorage overflow
+  var keepFrom=Math.max(1,curWeek-5);
+  Object.keys(ST).forEach(function(k){
+    var m=k.match(/^(\d+)_/);
+    if(m&&parseInt(m[1])<keepFrom)delete ST[k];
+  });
+}
+
 var toastTimer;
 function showToast(){
   var t=document.getElementById('saveToast');
+  t.textContent='Saved ✓';
+  t.style.background='var(--accent)';t.style.color='#000';
   t.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer=setTimeout(function(){t.classList.remove('show');},1200);
+}
+function showErrorToast(msg){
+  var t=document.getElementById('saveToast');
+  t.textContent='⚠ '+(msg||'Save failed');
+  t.style.background='var(--red)';t.style.color='#fff';
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){t.classList.remove('show');t.style.background='';t.style.color='';},4000);
 }
 
 // ── Keys ───────────────────────────────────────────────────────────────────────
