@@ -753,9 +753,20 @@ html,body{width:100%;overflow-x:hidden;background:#0a0a0f;font-family:'Inter',sa
         <button class="ai-tab" id="aitab-train" onclick="setAITab('train',this)">&#127947; Training</button>
         <button class="ai-tab" id="aitab-diet" onclick="setAITab('diet',this)">&#127825; Diet</button>
       </div>
+      <div class="ai-key-row" style="margin-bottom:6px">
+        <select id="aiProviderSel" class="ai-key-inp" style="flex:none;width:auto;padding:10px 8px;cursor:pointer" onchange="onAIProviderChange()">
+          <option value="anthropic">Anthropic (Claude)</option>
+          <option value="openai">OpenAI (GPT)</option>
+          <option value="gemini">Google Gemini</option>
+          <option value="groq">Groq (Llama)</option>
+          <option value="openrouter">OpenRouter</option>
+          <option value="mistral">Mistral AI</option>
+        </select>
+        <input class="ai-key-inp" type="text" id="aiModelInp" placeholder="model name" autocomplete="off" spellcheck="false" style="width:120px;flex:none;font-size:11px">
+      </div>
       <div class="ai-key-row">
-        <input class="ai-key-inp" type="password" id="aiKeyInp" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false">
-        <button class="ai-key-save" onclick="saveAIKey()">Save Key</button>
+        <input class="ai-key-inp" type="password" id="aiKeyInp" placeholder="Paste API key..." autocomplete="off" spellcheck="false">
+        <button class="ai-key-save" onclick="saveAIKey()">Save</button>
       </div>
       <button class="ai-gen-btn" id="aiGenBtn" onclick="generateAIReport()">&#9889; Generate Report</button>
     </div>
@@ -3210,6 +3221,25 @@ function shareImageCard(){
 // ── AI Coach ────────────────────────────────────────────────────────────────────
 var aiCurrentTab='full';
 
+// ── AI provider config ─────────────────────────────────────────────────────────
+var AI_PROVIDERS={
+  anthropic:{label:'Anthropic (Claude)',placeholder:'sk-ant-api03-...',defaultModel:'claude-haiku-4-5-20251001'},
+  openai:   {label:'OpenAI (GPT)',      placeholder:'sk-...',           defaultModel:'gpt-4o-mini'},
+  gemini:   {label:'Google Gemini',     placeholder:'AIza...',          defaultModel:'gemini-1.5-flash'},
+  groq:     {label:'Groq (Llama)',      placeholder:'gsk_...',          defaultModel:'llama-3.1-8b-instant'},
+  openrouter:{label:'OpenRouter',       placeholder:'sk-or-...',        defaultModel:'meta-llama/llama-3.1-8b-instruct:free'},
+  mistral:  {label:'Mistral AI',        placeholder:'...',              defaultModel:'mistral-small-latest'}
+};
+
+function onAIProviderChange(){
+  var sel=document.getElementById('aiProviderSel');
+  var prov=AI_PROVIDERS[sel.value]||AI_PROVIDERS.anthropic;
+  document.getElementById('aiKeyInp').placeholder=prov.placeholder;
+  var mdl=document.getElementById('aiModelInp');
+  if(mdl&&!mdl.value)mdl.value=prov.defaultModel;
+  localStorage.setItem('tt_ai_provider',sel.value);
+}
+
 function openAICoach(){
   var ov=document.getElementById('aiOv');
   if(!ov)return;
@@ -3217,6 +3247,14 @@ function openAICoach(){
   var saved=localStorage.getItem('tt_ai_key')||'';
   var inp=document.getElementById('aiKeyInp');
   if(inp&&saved)inp.value=saved;
+  var provSaved=localStorage.getItem('tt_ai_provider')||'anthropic';
+  var provSel=document.getElementById('aiProviderSel');
+  if(provSel)provSel.value=provSaved;
+  var mdlSaved=localStorage.getItem('tt_ai_model')||(AI_PROVIDERS[provSaved]||AI_PROVIDERS.anthropic).defaultModel;
+  var mdlInp=document.getElementById('aiModelInp');
+  if(mdlInp)mdlInp.value=mdlSaved;
+  onAIProviderChange();
+  if(inp&&saved)inp.value=saved; // restore key after placeholder update
 }
 function closeAICoach(){
   var ov=document.getElementById('aiOv');
@@ -3224,8 +3262,12 @@ function closeAICoach(){
 }
 function saveAIKey(){
   var v=(document.getElementById('aiKeyInp').value||'').trim();
-  if(!v){alert('Please enter your Anthropic API key.');return;}
+  if(!v){alert('Please enter your API key.');return;}
   localStorage.setItem('tt_ai_key',v);
+  var prov=(document.getElementById('aiProviderSel').value)||'anthropic';
+  localStorage.setItem('tt_ai_provider',prov);
+  var mdl=(document.getElementById('aiModelInp').value||'').trim()||(AI_PROVIDERS[prov]||AI_PROVIDERS.anthropic).defaultModel;
+  localStorage.setItem('tt_ai_model',mdl);
   var btn=document.getElementById('aiKeyInp');
   if(btn){btn.style.borderColor='var(--accent)';setTimeout(function(){btn.style.borderColor='';},1200);}
 }
@@ -3545,18 +3587,13 @@ function applyAIChanges(){
 
 function generateAIReport(){
   var key=(localStorage.getItem('tt_ai_key')||'').trim();
+  if(!key){var inp=document.getElementById('aiKeyInp');if(inp)key=(inp.value||'').trim();}
   if(!key){
-    var inp=document.getElementById('aiKeyInp');
-    if(inp)key=(inp.value||'').trim();
-  }
-  if(!key){
-    document.getElementById('aiBody').innerHTML='<div class="ai-error">Please enter your Anthropic API key first.</div>';
+    document.getElementById('aiBody').innerHTML='<div class="ai-error">Please enter your API key and select a provider first.</div>';
     return;
   }
-  if(!key.startsWith('sk-')){
-    document.getElementById('aiBody').innerHTML='<div class="ai-error">Invalid API key format. Key should start with "sk-".</div>';
-    return;
-  }
+  var prov=localStorage.getItem('tt_ai_provider')||'anthropic';
+  var model=localStorage.getItem('tt_ai_model')||(AI_PROVIDERS[prov]||AI_PROVIDERS.anthropic).defaultModel;
 
   var btn=document.getElementById('aiGenBtn');
   if(btn)btn.disabled=true;
@@ -3566,48 +3603,78 @@ function generateAIReport(){
   var data=collectAIData();
   var prompt=buildAIPrompt(data,aiCurrentTab);
 
-  fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      'x-api-key':key,
-      'anthropic-version':'2023-06-01',
-      'anthropic-dangerous-allow-browser':'true'
-    },
-    body:JSON.stringify({
-      model:'claude-haiku-4-5-20251001',
-      max_tokens:1500,
-      messages:[{role:'user',content:prompt}]
-    })
-  }).then(function(r){
-    if(!r.ok){
-      return r.json().then(function(e){
-        throw new Error((e&&e.error&&e.error.message)||('HTTP '+r.status));
-      });
-    }
-    return r.json();
-  }).then(function(json){
-    var rawText=(json.content&&json.content[0]&&json.content[0].text)||'No response.';
+  callAIProvider(prov,model,key,prompt).then(function(rawText){
     var changes=parseAIChanges(rawText);
     var displayText=stripAIChangesBlock(rawText);
     pendingAIChanges=changes||[];
-
     var summary=renderAIDataSummary(data);
     var tabLabel=aiCurrentTab==='full'?'Full Report':aiCurrentTab==='train'?'Training Plan':'Diet Plan';
     var changesHtml=aiCurrentTab!=='diet'?renderAIChangesUI(changes):'';
-
     document.getElementById('aiBody').innerHTML=
       summary+
-      '<div class="ai-section">'+
-        '<div class="ai-sec-title">&#129302; '+tabLabel+'</div>'+
-        '<div class="ai-content">'+esc(displayText)+'</div>'+
-      '</div>'+
+      '<div class="ai-section"><div class="ai-sec-title">&#129302; '+tabLabel+'</div><div class="ai-content">'+esc(displayText)+'</div></div>'+
       changesHtml;
     if(btn)btn.disabled=false;
   }).catch(function(err){
-    document.getElementById('aiBody').innerHTML='<div class="ai-error">&#9888; Error: '+esc(err.message)+'<br><br>Check your API key or internet connection. Make sure the key has access to Claude Haiku.</div>';
+    var hint={
+      anthropic:'Make sure the key starts with sk-ant- and has Claude Haiku access.',
+      openai:'Make sure the key starts with sk- and has GPT access.',
+      gemini:'Make sure the key starts with AIza and is a Gemini API key from Google AI Studio.',
+      groq:'Get a free key at console.groq.com',
+      openrouter:'Get a key at openrouter.ai — free credits available.',
+      mistral:'Get a key at console.mistral.ai'
+    }[prov]||'Check your API key and internet connection.';
+    document.getElementById('aiBody').innerHTML='<div class="ai-error">&#9888; '+esc(err.message)+'<br><br>'+hint+'</div>';
     if(btn)btn.disabled=false;
   });
+}
+
+function callAIProvider(prov,model,key,prompt){
+  // Gemini uses a completely different API format
+  if(prov==='gemini'){
+    return fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model)+':generateContent?key='+encodeURIComponent(key),{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:1500}})
+    }).then(function(r){
+      if(!r.ok)return r.json().then(function(e){throw new Error((e&&e.error&&e.error.message)||('HTTP '+r.status));});
+      return r.json();
+    }).then(function(j){
+      var t=(j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts&&j.candidates[0].content.parts[0]&&j.candidates[0].content.parts[0].text)||'No response.';
+      return t;
+    });
+  }
+
+  // Anthropic uses its own messages format
+  if(prov==='anthropic'){
+    return fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-allow-browser':'true'},
+      body:JSON.stringify({model:model,max_tokens:1500,messages:[{role:'user',content:prompt}]})
+    }).then(function(r){
+      if(!r.ok)return r.json().then(function(e){throw new Error((e&&e.error&&e.error.message)||('HTTP '+r.status));});
+      return r.json();
+    }).then(function(j){return (j.content&&j.content[0]&&j.content[0].text)||'No response.';});
+  }
+
+  // OpenAI-compatible: OpenAI, Groq, OpenRouter, Mistral all use same format
+  var endpoints={
+    openai:'https://api.openai.com/v1/chat/completions',
+    groq:'https://api.groq.com/openai/v1/chat/completions',
+    openrouter:'https://openrouter.ai/api/v1/chat/completions',
+    mistral:'https://api.mistral.ai/v1/chat/completions'
+  };
+  var url=endpoints[prov]||endpoints.openai;
+  var headers={'Content-Type':'application/json','Authorization':'Bearer '+key};
+  if(prov==='openrouter'){headers['HTTP-Referer']='https://tesi-trainer.app';headers['X-Title']='TESI Trainer';}
+  return fetch(url,{
+    method:'POST',
+    headers:headers,
+    body:JSON.stringify({model:model,max_tokens:1500,messages:[{role:'user',content:prompt}]})
+  }).then(function(r){
+    if(!r.ok)return r.json().then(function(e){throw new Error((e&&e.error&&e.error.message)||('HTTP '+r.status));});
+    return r.json();
+  }).then(function(j){return (j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content)||'No response.';});
 }
 
 // ── Boot ───────────────────────────────────────────────────────────────────────

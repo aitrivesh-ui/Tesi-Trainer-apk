@@ -4,3 +4,4 @@ ios/
 package-lock.json
 *.local
 .DS_Store
+.claude/
