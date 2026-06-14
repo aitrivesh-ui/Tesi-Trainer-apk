@@ -540,6 +540,19 @@ html,body{width:100%;overflow-x:hidden;background:#0a0a0f;font-family:'Inter',sa
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
 }
+/* Exercise Picker */
+.ex-pick-item{padding:11px 14px;margin-bottom:4px;background:var(--card);border-radius:10px;cursor:pointer;font-size:13px;color:var(--t1);transition:background .15s}
+.ex-pick-item:active{background:rgba(0,229,160,.18)}
+.ex-pick-cat{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;margin:10px 0 4px;padding:0 2px}
+/* Badge Flash */
+#badgeFlash{position:fixed;bottom:88px;left:50%;transform:translateX(-50%) translateY(40px);background:linear-gradient(135deg,rgba(26,26,46,.97),rgba(10,22,46,.97));border:1px solid rgba(0,229,160,.5);border-radius:16px;padding:14px 22px;text-align:center;font-size:14px;color:var(--t1);z-index:9999;pointer-events:none;opacity:0;transition:opacity .35s,transform .35s;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.6)}
+#badgeFlash.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* Calendar Heatmap */
+.hm-row{display:flex;gap:3px;align-items:center;margin-bottom:3px}
+.hm-lbl{font-size:9px;color:var(--t3);width:24px;flex:none;text-align:right;padding-right:5px}
+.hm-cell{width:16px;height:16px;border-radius:3px;flex:none}
+.hm-hdr{display:flex;gap:3px;padding-left:28px;margin-bottom:3px}
+.hm-hdr span{width:16px;font-size:9px;color:var(--t3);text-align:center;flex:none}
 </style>
 </head>
 <body>
@@ -1029,6 +1042,23 @@ var MEALS={
  ]}
 };
 
+// ── Exercise Database ──────────────────────────────────────────────────────────
+var EX_DB={
+ 'Chest':['Flat Bench Press','Incline DB Press','Decline Bench Press','Pec Deck','Cable Fly','DB Fly','Push-ups','Machine Chest Press','Cable Crossover','Chest Dips','Close-grip Push-ups','Landmine Press','Svend Press'],
+ 'Back':['Bent-over Barbell Row','Lat Pulldown','Seated Cable Row','T-Bar Row','Pull-ups','Chin-ups','Single-arm DB Row','Chest-supported Row','Face Pull','Straight-arm Pulldown','Inverted Row','Rack Pull','Meadows Row','Pendlay Row'],
+ 'Shoulders':['Barbell OHP','DB Shoulder Press','Lateral Raise','Front Raise','Rear Delt Fly','Arnold Press','Machine Shoulder Press','Cable Lateral Raise','Upright Row','Face Pull','Shrugs','Cable Face Pull','Landmine Lateral Raise'],
+ 'Biceps':['Barbell Curl','DB Curl','Hammer Curl','Preacher Curl','Incline DB Curl','Cable Curl','Concentration Curl','Reverse Curl','EZ-Bar Curl','Cross-body Curl','Spider Curl','Zottman Curl'],
+ 'Triceps':['Close-grip Bench Press','Tricep Pushdown (rope)','Overhead Tricep Ext.','Skull Crushers','Tricep Kickback','Cable Overhead Extension','Dips','Machine Tricep Extension','Diamond Push-ups','JM Press','Tate Press'],
+ 'Quads':['Barbell Squat','Leg Press','Leg Extension','Hack Squat','Goblet Squat','Bulgarian Split Squat','Front Squat','Wall Sit','Walking Lunges','Step-ups','Sissy Squat','Leg Press Calf Raise'],
+ 'Hamstrings':['Romanian Deadlift','Leg Curl','Good Mornings','Nordic Curl','Stiff-leg Deadlift','Seated Leg Curl','Lying Leg Curl','Sumo Deadlift','Single-leg RDL'],
+ 'Glutes':['Hip Thrust','Glute Bridge','Cable Kickback','Sumo Squat','Donkey Kick','Hip Abduction Machine','Band Pull-apart','Frog Pump','Clamshell'],
+ 'Calves':['Standing Calf Raise','Seated Calf Raise','Donkey Calf Raise','Smith Machine Calf Raise','Single-leg Calf Raise'],
+ 'Core':['Plank','Crunches','Cable Crunch','Hanging Leg Raise','Russian Twist','Ab Wheel','Bicycle Crunch','Decline Sit-up','Side Plank','Landmine Twist','Dragon Flag','V-sit','Hollow Body Hold','Dead Bug'],
+ 'Compound':['Deadlift','Power Clean','Farmer Walk','Kettlebell Swing','Bear Crawl','Clean Pull','Push Press','Trap Bar Deadlift','Power Snatch','Clean & Jerk','Barbell Complex','Sled Push','Sled Pull'],
+ 'Cardio':['Treadmill Run','Stationary Cycling','Jump Rope','Rowing Machine','Stair Climber','Elliptical','Battle Ropes','Box Jumps','Burpees','Mountain Climbers'],
+ 'Stretching':['Hip Flexor Stretch','Hamstring Stretch','Chest Opener','Shoulder Cross-body Stretch','Pigeon Pose','Cat-Cow','Foam Roll Quads','Foam Roll Back','Couch Stretch','90/90 Hip Stretch']
+};
+
 // ── State ──────────────────────────────────────────────────────────────────────
 var DAYS, ST, MC, WG, curDay, curWeek, curTab, mealType, editingEx;
 
@@ -1252,7 +1282,7 @@ function renderMain(){
 
   // Sections
   day.sections.forEach(function(sec,s){
-    h+='<div class="slbl-row"><span class="slbl">'+esc(sec.name)+'</span><button class="add-ex-btn" onclick="addExercise('+d+','+s+')">+ Add Exercise</button></div>';
+    h+='<div class="slbl-row"><span class="slbl">'+esc(sec.name)+'</span><button class="add-ex-btn" onclick="openExPick('+d+','+s+')">+ Add Exercise</button></div>';
     sec.exercises.forEach(function(ex,e){
       var done=ST[dk(w,d,s,e)];
       var isEditing=(editingEx===d+'_'+s+'_'+e);
@@ -1401,17 +1431,43 @@ function saveTgt(d,s,e,si,v){
 }
 
 // ── Add / delete exercise ──────────────────────────────────────────────────────
-function addExercise(d,s){
-  var ex={name:'New Exercise',hint:'Add form cue here',sets:[
-    {t:HYO,l:'HYO 1',r:10,w1:0,tr:true},
-    {t:HYO,l:'HYO 2',r:10,w1:0,tr:true},
-    {t:HYO,l:'HYO 3',r:10,w1:0,tr:true}
-  ]};
+function addExercise(d,s){openExPick(d,s);}
+
+// ── Exercise Picker ────────────────────────────────────────────────────────────
+var _exPickD=-1,_exPickS=-1;
+function openExPick(d,s){
+  _exPickD=d;_exPickS=s;
+  document.getElementById('exPickSearch').value='';
+  filterExPick();
+  document.getElementById('exPickOv').style.display='flex';
+  setTimeout(function(){document.getElementById('exPickSearch').focus();},80);
+}
+function closeExPick(){document.getElementById('exPickOv').style.display='none';}
+function filterExPick(){
+  var q=(document.getElementById('exPickSearch').value||'').toLowerCase();
+  var h='';
+  Object.keys(EX_DB).forEach(function(cat){
+    var exs=EX_DB[cat].filter(function(nm){return !q||nm.toLowerCase().indexOf(q)!==-1||cat.toLowerCase().indexOf(q)!==-1;});
+    if(!exs.length)return;
+    h+='<div class="ex-pick-cat">'+cat+'</div>';
+    exs.forEach(function(nm){h+='<div class="ex-pick-item" onclick="doPickEx('+JSON.stringify(nm)+')">'+esc(nm)+'</div>';});
+  });
+  if(!h)h='<div style="padding:20px;text-align:center;color:var(--t3);font-size:12px">No match — press "Add Custom" below</div>';
+  document.getElementById('exPickList').innerHTML=h;
+}
+function doPickEx(name){
+  var d=_exPickD,s=_exPickS;
+  if(d<0)return;
+  var ex={name:name,hint:'',sets:[{t:HYO,l:'HYO 1',r:10,w1:0,tr:true},{t:HYO,l:'HYO 2',r:10,w1:0,tr:true},{t:HYO,l:'HYO 3',r:10,w1:0,tr:true}]};
   DAYS[d].sections[s].exercises.push(ex);
-  var e=DAYS[d].sections[s].exercises.length-1;
-  editingEx=d+'_'+s+'_'+e;
-  initMissingKeys();
-  persist();renderMain();
+  editingEx=d+'_'+s+'_'+(DAYS[d].sections[s].exercises.length-1);
+  initMissingKeys();persist();renderMain();
+  closeExPick();
+}
+function pickCustomEx(){
+  var q=(document.getElementById('exPickSearch').value||'').trim();
+  if(!q){document.getElementById('exPickSearch').focus();return;}
+  doPickEx(q);
 }
 function deleteExercise(d,s,e){
   if(!confirm('Delete "'+DAYS[d].sections[s].exercises[e].name+'"?'))return;
@@ -2313,6 +2369,7 @@ function autoEndSession(){
   persist();
   stopSessTimer();
   updateSessDisplay();
+  checkBadgeFlash();
   // Show quick "Done!" flash on sub-label
   var sub=document.getElementById('sessTimerSub');
   if(sub){sub.textContent='Done ✓';sub.style.color='var(--accent)';}
@@ -2336,6 +2393,7 @@ function manualEndSession(){
   persist();
   stopSessTimer();
   updateSessDisplay();
+  checkBadgeFlash();
   var sub=document.getElementById('sessTimerSub');
   if(sub){sub.textContent='Done ✓';sub.style.color='var(--accent)';}
 }
@@ -2743,6 +2801,31 @@ function renderProgress(){
   h+=anyDays?'<div class="pg-bars" style="height:80px">'+dayBars+'</div>':'<div class="pg-empty">Mark exercises done to track training days.</div>';
   h+='</div>';
 
+  // Training calendar heatmap
+  var nonRestDays=DAYS.map(function(day,d){return {day:day,d:d};}).filter(function(x){return !x.day.isRest;});
+  h+='<div class="pg-sec"><div class="pg-sec-title">&#128197; Training Calendar</div>';
+  h+='<div style="overflow-x:auto"><div class="hm-hdr">';
+  nonRestDays.forEach(function(x){h+='<span>'+x.day.label+'</span>';});
+  h+='</div>';
+  for(var hmw=1;hmw<=curWeek;hmw++){
+    h+='<div class="hm-row"><span class="hm-lbl">W'+hmw+'</span>';
+    nonRestDays.forEach(function(x){
+      var total=0,doneC=0;
+      (x.day.sections||[]).forEach(function(sec,s){
+        (sec.exercises||[]).forEach(function(_,e){total++;if(ST[dk(hmw,x.d,s,e)])doneC++;});
+      });
+      var clr='rgba(255,255,255,.05)';
+      if(total>0&&doneC>0){
+        var pct2=doneC/total;
+        clr=pct2>=1?'var(--accent)':pct2>=0.5?'rgba(0,229,160,.55)':'rgba(0,229,160,.28)';
+      }
+      var tt='W'+hmw+' '+x.day.day+(total>0?' ('+doneC+'/'+total+')':'');
+      h+='<div class="hm-cell" style="background:'+clr+'" title="'+tt+'"></div>';
+    });
+    h+='</div>';
+  }
+  h+='</div></div>';
+
   // Body weight chart
   h+='<div class="pg-sec"><div class="pg-sec-title">&#9878; Body Weight Trend</div>';
   var pts=BW_LOG.slice(-30);
@@ -2938,6 +3021,23 @@ function computeBadges(){
     {i:'&#128640;',n:'50 Tonnes',s:'Lifetime volume',ok:vol>=50000},
     {i:'&#127757;',n:'100 Tonnes',s:'Lifetime volume',ok:vol>=100000}
   ];
+}
+
+// ── Badge Flash ────────────────────────────────────────────────────────────────
+function checkBadgeFlash(){
+  var badges=computeBadges();
+  var seen=[];try{seen=JSON.parse(localStorage.getItem(uPfx('bs'))||'[]');}catch(e){}
+  var newOnes=badges.filter(function(b){return b.ok&&seen.indexOf(b.n)===-1;});
+  if(!newOnes.length)return;
+  var allEarned=badges.filter(function(b){return b.ok;}).map(function(b){return b.n;});
+  try{localStorage.setItem(uPfx('bs'),JSON.stringify(allEarned));}catch(e){}
+  newOnes.forEach(function(b,i){setTimeout(function(){showBadgeFlash(b);},i*4000);});
+}
+function showBadgeFlash(b){
+  var el=document.getElementById('badgeFlash');if(!el)return;
+  el.innerHTML='<div style="font-size:24px;margin-bottom:4px">'+b.i+'</div><div style="font-weight:700;font-size:13px;margin-bottom:2px">Achievement Unlocked!</div><div style="font-size:14px;color:var(--accent)">'+b.n+'</div><div style="font-size:11px;color:var(--t3);margin-top:2px">'+b.s+'</div>';
+  el.classList.add('show');
+  setTimeout(function(){el.classList.remove('show');},3500);
 }
 
 // ── Deload ─────────────────────────────────────────────────────────────────────
@@ -3700,5 +3800,23 @@ if('serviceWorker' in navigator){
   }).catch(function(){});
 }
 </script>
+
+<!-- Exercise Picker -->
+<div class="bw-overlay" id="exPickOv" style="display:none" onclick="if(event.target===this)closeExPick()">
+  <div class="bw-card" style="max-width:390px;max-height:82vh;display:flex;flex-direction:column;padding:0;overflow:hidden">
+    <div class="bw-head" style="padding:16px 18px 10px;margin:0;flex:none">&#127947; Add Exercise <button class="share-close" onclick="closeExPick()">&#10005;</button></div>
+    <div style="padding:0 14px 8px;flex:none">
+      <input id="exPickSearch" type="text" class="ai-key-inp" placeholder="&#128269; Search 150+ exercises..." oninput="filterExPick()" onkeydown="if(event.key==='Enter')pickCustomEx()" autocomplete="off" spellcheck="false" style="width:100%;box-sizing:border-box;margin:0">
+    </div>
+    <div id="exPickList" style="overflow-y:auto;flex:1;padding:0 12px 8px"></div>
+    <div style="padding:8px 14px 16px;flex:none;border-top:1px solid rgba(255,255,255,.07)">
+      <button class="ai-gen-btn" style="padding:10px;font-size:12px;width:100%" onclick="pickCustomEx()">+ Add Custom Exercise Name</button>
+    </div>
+  </div>
+</div>
+
+<!-- Badge Flash -->
+<div id="badgeFlash"></div>
+
 </body>
 </html>
